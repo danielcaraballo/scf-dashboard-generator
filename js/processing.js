@@ -1,4 +1,56 @@
 window.FleetProcessing = {
+  validateFleetData(rows, cols) {
+    if (!rows || rows.length === 0) {
+      return { isValid: false, reason: 'El archivo CSV no contiene registros de datos para analizar.' };
+    }
+
+    const requiredDimensions = [
+      { key: 'status', label: 'Estatus del vehículo' },
+      { key: 'geo', label: 'Ubicación geográfica (Estado)' },
+      { key: 'fuel', label: 'Tipo de combustible' },
+      { key: 'gerencia', label: 'Gerencia / Unidad usuaria' },
+      { key: 'gps', label: 'Cobertura GPS' },
+      { key: 'verificado', label: 'Verificación de datos' }
+    ];
+
+    const missingRequired = requiredDimensions.filter((d) => !cols || !cols[d.key]);
+    if (missingRequired.length > 0) {
+      const missingNames = missingRequired.map((d) => d.label).join(', ');
+      return {
+        isValid: false,
+        reason: `El archivo CSV no contiene todos los datos requeridos para generar el tablero. Columnas faltantes: ${missingNames}. El reporte no se generará hasta que se incluya un conjunto completo de datos.`
+      };
+    }
+
+    const statusCol = cols.status;
+    let validFleetMatches = 0;
+    let nonEmpCount = 0;
+
+    for (const row of rows) {
+      const val = row[statusCol];
+      if (val === undefined || val === null || String(val).trim() === '') continue;
+      nonEmpCount++;
+      const semantic = FleetConfig.toSemantic(val);
+      if (semantic && semantic !== 'sin_clasificar') {
+        validFleetMatches++;
+      }
+    }
+
+    if (nonEmpCount === 0) {
+      return { isValid: false, reason: `La columna de estatus ("${statusCol}") está vacía en todos los registros.` };
+    }
+
+    const matchRatio = validFleetMatches / nonEmpCount;
+    if (validFleetMatches === 0 || (nonEmpCount >= 10 && matchRatio < 0.15)) {
+      return {
+        isValid: false,
+        reason: `El archivo cargado no parece contener datos de flota vehicular. La columna "${statusCol}" no contiene estatus de vehículos reconocidos (ej. Operativo, En Reparación, Inoperativo, Desincorporado, Hurtado, etc.).`
+      };
+    }
+
+    return { isValid: true };
+  },
+
   analyze(rows, cols) {
     const statusCol = cols.status;
     const counts = {};
@@ -28,6 +80,35 @@ window.FleetProcessing = {
       };
     });
 
+    const unclassifiedCount = counts.sin_clasificar || 0;
+    const unclassifiedPct = total ? (unclassifiedCount / total) * 100 : 0;
+
+    const dimensionLabels = {
+      status: 'Estatus del vehículo',
+      geo: 'Ubicación geográfica (Estado)',
+      fuel: 'Tipo de combustible',
+      gerencia: 'Gerencia / Unidad usuaria',
+      gps: 'Cobertura GPS',
+      verificado: 'Verificación de datos'
+    };
+
+    const detectedColumns = [];
+    const missingColumns = [];
+    for (const [key, label] of Object.entries(dimensionLabels)) {
+      if (cols[key]) {
+        detectedColumns.push({ key, label, colName: cols[key] });
+      } else {
+        missingColumns.push({ key, label });
+      }
+    }
+
+    const geoData = this.distribution(rows, cols.geo, 10);
+    const fuelData = this.distribution(rows, cols.fuel, null);
+    const gerenciaData = this.distribution(rows, cols.gerencia, null);
+    const gpsData = this.coverage(rows, cols.gps);
+    const verificadoData = this.coverage(rows, cols.verificado);
+    const porEstadoData = this.operatividadPorEstado(rows, cols);
+
     return {
       total,
       valid,
@@ -40,12 +121,25 @@ window.FleetProcessing = {
       },
       stats,
       counts,
-      geo: this.distribution(rows, cols.geo, 10),
-      fuel: this.distribution(rows, cols.fuel, null),
-      gerencia: this.distribution(rows, cols.gerencia, null),
-      gpsCoverage: this.coverage(rows, cols.gps),
-      verificado: this.coverage(rows, cols.verificado),
-      porEstado: this.operatividadPorEstado(rows, cols)
+      geo: geoData,
+      fuel: fuelData,
+      gerencia: gerenciaData,
+      gpsCoverage: gpsData,
+      verificado: verificadoData,
+      porEstado: porEstadoData,
+      coverage: {
+        detectedCount: detectedColumns.length,
+        totalDimensions: 6,
+        detectedColumns,
+        missingColumns,
+        unclassifiedCount,
+        unclassifiedPct,
+        hasGeo: !!(porEstadoData && porEstadoData.length > 0),
+        hasFuel: !!(fuelData && fuelData.length > 0),
+        hasGerencia: !!(gerenciaData && gerenciaData.length > 0),
+        hasGps: !!gpsData,
+        hasVerificado: !!verificadoData
+      }
     };
   },
 
@@ -63,6 +157,7 @@ window.FleetProcessing = {
     return Object.entries(byEstado)
       .map(([label, d]) => ({
         label,
+        shortLabel: FleetConfig.formatStateLabel(label),
         total: d.total,
         operativos: d.operativos,
         inactivos: d.total - d.operativos,

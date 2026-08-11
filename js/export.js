@@ -135,7 +135,7 @@ window.FleetExport = {
     const originalLabel = btn.innerHTML;
 
     btn.disabled = true;
-    btn.innerHTML = 'Generando imagen…';
+    btn.innerHTML = 'Generando PNG…';
 
     let wrapper = null;
     try {
@@ -165,12 +165,12 @@ window.FleetExport = {
           <div>
             <h1 style="font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700; color: #0F172A; margin: 0; line-height: 1.2;">Tablero de Control de Flota</h1>
             <p style="font-size: 13px; color: #64748B; margin: 4px 0 0 0;">
-              Archivo: <strong style="color: #334155; font-family: 'JetBrains Mono', monospace;">${fileName}</strong> &middot; Registros procesados: <strong style="color: #334155; font-family: 'JetBrains Mono', monospace;">${totalRecords}</strong>
+              Archivo: <strong style="color: #334155; font-weight: 600;">${fileName}</strong> &middot; Registros procesados: <strong style="color: #334155; font-weight: 600;">${totalRecords}</strong>
             </p>
           </div>
           <div style="text-align: right;">
             <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8; display: block; margin-bottom: 4px;">Fecha de Emisión</span>
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #334155; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 6px 12px; border-radius: 8px; display: inline-block;">${dateStr}</span>
+            <span style="font-size: 13px; font-weight: 600; color: #334155; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 6px 12px; border-radius: 8px; display: inline-block;">${dateStr}</span>
           </div>
         </div>
         <div id="pngReportBody" class="space-y-5">
@@ -293,7 +293,7 @@ window.FleetExport = {
           pdf.text(metaLabels[i], metaX, marginY + 14);
           metaX += pdf.getTextWidth(metaLabels[i]);
 
-          setPdfFont('JetBrainsMono', 'bold');
+          setPdfFont('Poppins', 'bold');
           pdf.setTextColor(51, 65, 85);
           pdf.text(metaValues[i], metaX, marginY + 14);
           metaX += pdf.getTextWidth(metaValues[i]);
@@ -307,7 +307,7 @@ window.FleetExport = {
         pdf.text(labelText, headerX + headerW - 7 - labelWidth, marginY + 6.5);
 
         const badgeText = dateStr;
-        setPdfFont('JetBrainsMono', 'bold');
+        setPdfFont('Poppins', 'bold');
         pdf.setFontSize(8);
         const badgeW = pdf.getTextWidth(badgeText) + 8;
         const badgeH = 6.5;

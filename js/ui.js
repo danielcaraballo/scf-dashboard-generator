@@ -71,8 +71,8 @@ window.FleetUI = (function () {
               <div class="h-full rounded-full transition-all duration-300" style="width:${s.pct}%; background:${s.color}"></div>
             </div>
           </div>
-          <span class="font-mono text-xs sm:text-sm font-semibold text-slate-500 shrink-0 w-11 sm:w-14 text-right">${s.pct.toFixed(1)}%</span>
-          <span class="font-mono text-xs sm:text-sm font-semibold text-slate-800 shrink-0 w-8 sm:w-10 text-right">${fmt.format(s.count)}</span>
+          <span class="text-xs sm:text-sm font-semibold text-slate-500 shrink-0 w-11 sm:w-14 text-right">${s.pct.toFixed(1)}%</span>
+          <span class="text-xs sm:text-sm font-bold text-slate-800 shrink-0 w-8 sm:w-10 text-right">${fmt.format(s.count)}</span>
         </div>`)
       .join('');
   }
@@ -105,18 +105,18 @@ window.FleetUI = (function () {
 
       if (mejor.pct > 0) {
         cards.push(kpiCardHtml({
-          title: 'Operatividad más alta',
+          title: 'Mayor operatividad',
           value: mejor.label,
-          sub: `<span class="inline-flex items-center gap-0.5 text-xs font-semibold whitespace-nowrap text-emerald-600 font-mono">${iconSvg('arrowUp')}<span>${mejor.pct.toFixed(0)}%</span></span>`,
+          sub: `<span class="inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap text-emerald-600">${iconSvg('arrowUp')}<span>${mejor.pct.toFixed(0)}%</span></span>`,
           icon: iconSvg('arrowUp'),
           chipClass: 'bg-emerald-50 text-emerald-600'
         }));
       }
       if (peor.pct < 100) {
         cards.push(kpiCardHtml({
-          title: 'Operatividad más baja',
+          title: 'Menor operatividad',
           value: peor.label,
-          sub: `<span class="inline-flex items-center gap-0.5 text-xs font-semibold whitespace-nowrap text-red-600 font-mono">${iconSvg('arrowDown')}<span>${peor.pct.toFixed(0)}%</span></span>`,
+          sub: `<span class="inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap text-red-600">${iconSvg('arrowDown')}<span>${peor.pct.toFixed(0)}%</span></span>`,
           icon: iconSvg('arrowDown'),
           chipClass: 'bg-red-50 text-red-600'
         }));
@@ -128,7 +128,7 @@ window.FleetUI = (function () {
       cards.push(kpiCardHtml({
         title: 'Cobertura GPS',
         value: fmt.format(gps.yes),
-        sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-mono">de ${fmt.format(gps.yes + gps.no)} vehículos · ${gps.pct.toFixed(1)}%</span>`,
+        sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium">de ${fmt.format(gps.yes + gps.no)} vehículos · ${gps.pct.toFixed(1)}%</span>`,
         icon: iconSvg('mapPin'),
         chipClass: 'bg-sky-50 text-sky-600'
       }));
@@ -141,13 +141,19 @@ window.FleetUI = (function () {
     const items = porEstado || [];
     const box = byId('estadoChartBox');
     const empty = byId('estadoEmpty');
+    const legend = byId('estadoLegend');
+
     if (!items.length) {
       box.classList.add('hidden');
+      if (legend) legend.classList.add('hidden');
       empty.classList.remove('hidden');
       return;
     }
+
     empty.classList.add('hidden');
     box.classList.remove('hidden');
+    if (legend) legend.classList.remove('hidden');
+
     FleetCharts.renderVBarStacked('estadoChartCanvas', items);
   }
 
@@ -159,25 +165,91 @@ window.FleetUI = (function () {
             <span class="w-2.5 h-2.5 rounded-full inline-block shrink-0" style="background:${item.color}"></span>
             ${item.label}
           </span>
-          <span class="font-mono text-sm text-slate-900">${fmt.format(item.count)}</span>
+          <span class="text-sm font-semibold text-slate-900">${fmt.format(item.count)}</span>
         </div>`)
       .join('');
   }
 
+  function renderQualityBanner(coverage) {
+    const box = byId('qualityBannerBox');
+    if (!box) return;
+    if (!coverage) {
+      box.classList.add('hidden');
+      return;
+    }
+    const messages = [];
+
+    if (coverage.missingColumns && coverage.missingColumns.length > 0) {
+      const names = coverage.missingColumns.map((c) => c.label).join(', ');
+      messages.push(`<div class="flex items-start gap-2">
+        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 zm-9-3.75h.008v.008H12v-.008z" /></svg>
+        <span><strong>Análisis parcial (${coverage.detectedCount}/6 dimensiones):</strong> No se detectaron datos para <em>${names}</em>. El tablero se adaptó para mostrar los indicadores disponibles.</span>
+      </div>`);
+    }
+
+    if (coverage.unclassifiedPct > 5) {
+      messages.push(`<div class="flex items-start gap-2 ${messages.length ? 'mt-2 pt-2 border-t border-amber-200' : ''}">
+        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.008v.008H12v-.008z" /></svg>
+        <span><strong>Datos sin clasificar:</strong> ${fmt.format(coverage.unclassifiedCount)} registros (${coverage.unclassifiedPct.toFixed(1)}%) contienen un estatus no reconocido por el sistema.</span>
+      </div>`);
+    }
+
+    if (messages.length > 0) {
+      box.innerHTML = messages.join('');
+      box.classList.remove('hidden');
+    } else {
+      box.classList.add('hidden');
+      box.innerHTML = '';
+    }
+  }
+
+  function renderFuelSection(fuel) {
+    const box = byId('fuelBox');
+    const empty = byId('fuelEmpty');
+    if (fuel && fuel.length > 0) {
+      box.classList.remove('hidden');
+      empty.classList.add('hidden');
+      const totalFuel = fuel.reduce((s, i) => s + i.count, 0);
+      FleetCharts.renderDonut('fuelCanvas', fuel, totalFuel);
+      const colors = FleetCharts.palette(fuel.length);
+      byId('fuelLegend').innerHTML = legendHtml(fuel.map((f, i) => ({ label: f.label, count: f.count, color: colors[i] })));
+    } else {
+      box.classList.add('hidden');
+      empty.classList.remove('hidden');
+    }
+  }
+
+  function renderGerenciaSection(gerencia) {
+    const box = byId('gerenciaBox');
+    const empty = byId('gerenciaEmpty');
+    if (gerencia && gerencia.length > 0) {
+      box.classList.remove('hidden');
+      empty.classList.add('hidden');
+      FleetCharts.renderHBar('gerenciaCanvas', gerencia, '#0EA5E9');
+    } else {
+      box.classList.add('hidden');
+      empty.classList.remove('hidden');
+    }
+  }
+
   function renderCompleteness(analysis) {
     const verified = analysis.verificado;
+    const geoCount = analysis.porEstado ? analysis.porEstado.length : 0;
+    const gerenciaCount = analysis.gerencia ? analysis.gerencia.length : 0;
+
     const cards = [
-      ['Registros leídos', fmt.format(analysis.total)],
-      ['Filas válidas', fmt.format(analysis.valid)],
-      ['Verificados', verified ? `${fmt.format(verified.yes)} (${verified.pct.toFixed(0)}%)` : '—']
+      ['Total registros', fmt.format(analysis.total)],
+      ['Vehículos verificados', verified ? `${fmt.format(verified.yes)} (${verified.pct.toFixed(0)}%)` : 'Sin datos'],
+      ['Estados cubiertos', geoCount ? fmt.format(geoCount) : 'Sin datos'],
+      ['Gerencias registradas', gerenciaCount ? fmt.format(gerenciaCount) : 'Sin datos']
     ];
 
     byId('completenessContainer').innerHTML = cards
       .map(([label, value]) => `
-        <div class="w-1/2 sm:w-1/3 p-2">
-        <div class="rounded-md border border-slate-200 bg-white p-4 flex flex-col gap-1 min-w-0 h-full">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">${label}</span>
-          <span class="font-mono text-base font-medium text-slate-900 truncate" title="${value}">${value}</span>
+        <div class="w-1/2 sm:w-1/4 p-2">
+        <div class="rounded-md border border-slate-200 bg-white p-3 flex flex-col gap-1 min-w-0 h-full">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 truncate" title="${label}">${label}</span>
+          <span class="text-sm sm:text-base font-bold text-slate-900 truncate" title="${value}">${value}</span>
         </div>
         </div>`)
       .join('');
@@ -186,20 +258,14 @@ window.FleetUI = (function () {
   function render(result) {
     const { analysis, file } = result;
 
+    renderQualityBanner(analysis.coverage);
     renderHero(analysis);
     renderStatusList(analysis.stats);
     renderKpiCards(analysis);
     renderEstadoComparison(analysis.porEstado);
+    renderFuelSection(analysis.fuel);
+    renderGerenciaSection(analysis.gerencia);
     renderCompleteness(analysis);
-
-    if (analysis.fuel && analysis.fuel.length > 0) {
-      FleetCharts.renderDonut('fuelCanvas', analysis.fuel, analysis.total);
-      const colors = FleetCharts.palette(analysis.fuel.length);
-      byId('fuelLegend').innerHTML = legendHtml(analysis.fuel.map((f, i) => ({ label: f.label, count: f.count, color: colors[i] })));
-    }
-    if (analysis.gerencia && analysis.gerencia.length > 0) {
-      FleetCharts.renderHBar('gerenciaCanvas', analysis.gerencia, '#0EA5E9');
-    }
 
     byId('emptyState').classList.add('hidden');
     byId('reportArea').classList.remove('hidden');

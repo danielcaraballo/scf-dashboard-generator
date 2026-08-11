@@ -121,10 +121,10 @@ window.FleetCharts = (function () {
     charts[id] = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: items.map((i) => i.label),
+        labels: items.map((i) => i.shortLabel || i.label),
         datasets: [
           { label: 'Operativos', data: items.map((i) => i.operativos), backgroundColor: '#10B981', borderRadius: 0 },
-          { label: 'No operativos', data: items.map((i) => i.inactivos), backgroundColor: '#EF4444', borderRadius: 4 }
+          { label: 'Inoperativos', data: items.map((i) => i.inactivos), backgroundColor: '#EF4444', borderRadius: 4 }
         ]
       },
       plugins: [pctTopPlugin(items)],
@@ -135,12 +135,18 @@ window.FleetCharts = (function () {
           legend: { display: false },
           tooltip: {
             callbacks: {
+              title: (t) => {
+                const item = items[t[0].dataIndex];
+                return item ? item.label : t[0].label;
+              },
               label: (c) => {
-                const item = items.find((i) => i.label === c.label);
-                return `${c.dataset.label}: ${c.raw.toLocaleString('es-MX')}`;
+                const item = items[c.dataIndex];
+                if (!item || !item.total) return `${c.dataset.label}: ${c.raw.toLocaleString('es-MX')}`;
+                const pct = (c.raw / item.total) * 100;
+                return `${c.dataset.label}: ${c.raw.toLocaleString('es-MX')} (${pct.toFixed(1)}%)`;
               },
               footer: (t) => {
-                const item = items.find((i) => i.label === t[0].label);
+                const item = items[t[0].dataIndex];
                 if (!item) return '';
                 return `Total: ${item.total.toLocaleString('es-MX')} · ${item.pct.toFixed(1)}% operativos`;
               }
