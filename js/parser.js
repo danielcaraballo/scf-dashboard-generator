@@ -96,6 +96,12 @@ window.FleetParser = {
     const gerenciaCol = this.detectColumn(headers, FleetConfig.GERENCIA_COLUMN_CANDIDATES, used);
     if (gerenciaCol) used.push(gerenciaCol);
 
+    const modeloCol = this.detectColumn(headers, FleetConfig.MODEL_COLUMN_CANDIDATES, used);
+    if (modeloCol) used.push(modeloCol);
+
+    const claseCol = this.detectColumn(headers, FleetConfig.CLASS_COLUMN_CANDIDATES, used);
+    if (claseCol) used.push(claseCol);
+
     const gpsCol = this.detectColumn(headers, FleetConfig.GPS_COLUMN_CANDIDATES, used);
     if (gpsCol) used.push(gpsCol);
 
@@ -107,6 +113,8 @@ window.FleetParser = {
       geo: geoCol,
       fuel: fuelCol,
       gerencia: gerenciaCol,
+      modelo: modeloCol,
+      clase: claseCol,
       gps: gpsCol,
       verificado: verificadoCol
     };

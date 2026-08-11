@@ -41,6 +41,8 @@ window.FleetConfig = {
   GEO_COLUMN_CANDIDATES: ['estado', 'estado_geografico', 'ubicacion'],
   FUEL_COLUMN_CANDIDATES: ['tipo combustible', 'combustible'],
   GERENCIA_COLUMN_CANDIDATES: ['gerencia', 'unidad usuaria'],
+  MODEL_COLUMN_CANDIDATES: ['modelo', 'tipo_vehiculo', 'tipo_unidad', 'marca_modelo', 'vehiculo', 'modelo_vehiculo', 'tipo'],
+  CLASS_COLUMN_CANDIDATES: ['clase', 'clase_vehiculo', 'clase (tipo)', 'categoria', 'clase_unidad', 'tipo_vehiculo', 'modelo'],
   GPS_COLUMN_CANDIDATES: ['gps'],
   VERIFICADO_COLUMN_CANDIDATES: ['verificado'],
 

@@ -6,7 +6,10 @@ window.FleetUI = (function () {
   const ICONS = {
     arrowUp: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 19.5v-15m0 0l-6.75 6.75M12 4.5l6.75 6.75" />',
     arrowDown: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75" />',
-    mapPin: '<path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />'
+    mapPin: '<path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />',
+    checkCircle: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+    fire: '<path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />',
+    truck: '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25v11.25m0-11.25h-9.75A1.125 1.125 0 003.375 8.625v5.625" />'
   };
 
   function iconSvg(name, cls) {
@@ -36,16 +39,77 @@ window.FleetUI = (function () {
     return { color: '#EF4444', soft: 'bg-red-50', bar: 'bg-red-500', text: 'text-red-600' };
   }
 
-  function renderHero(analysis) {
+  function extractStates(rows, geoCol) {
+    if (!geoCol || !rows || !rows.length) return [];
+    const counts = {};
+    for (const row of rows) {
+      const val = row[geoCol];
+      const norm = FleetConfig.normalize(val);
+      if (!norm) continue;
+      if (!counts[norm]) {
+        counts[norm] = { norm, label: norm, count: 0 };
+      }
+      counts[norm].count++;
+    }
+    return Object.values(counts).sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
+  }
+
+  function renderStateFilter(rawRows, cols, activeStateFilter) {
+    const filterBox = byId('filterBarBox');
+    const select = byId('stateFilterSelect');
+    const badge = byId('activeFilterBadge');
+    const badgeText = byId('activeFilterText');
+
+    if (!filterBox || !select) return;
+
+    if (!cols || !cols.geo || !rawRows || rawRows.length === 0) {
+      filterBox.classList.add('hidden');
+      return;
+    }
+
+    const states = extractStates(rawRows, cols.geo);
+    if (states.length === 0) {
+      filterBox.classList.add('hidden');
+      return;
+    }
+
+    filterBox.classList.remove('hidden');
+
+    const expectedOptionCount = states.length + 1;
+    if (select.options.length !== expectedOptionCount) {
+      select.innerHTML = `<option value="">Todos los Estados</option>` +
+        states.map((s) => `<option value="${s.norm}">${s.label}</option>`).join('');
+    }
+
+    select.value = activeStateFilter || '';
+
+    if (activeStateFilter) {
+      const activeState = states.find((s) => s.norm === activeStateFilter);
+      const label = activeState ? activeState.label : activeStateFilter;
+      const count = activeState ? activeState.count : 0;
+      badgeText.textContent = `Filtro: Estado ${label}`;
+      badge.classList.remove('hidden');
+      badge.classList.add('inline-flex');
+    } else {
+      badge.classList.add('hidden');
+      badge.classList.remove('inline-flex');
+    }
+  }
+
+  function renderHero(analysis, activeStateFilter) {
     const tone = pctTone(analysis.rate);
     const operativos = statFor(analysis.stats, 'operativo');
 
     byId('heroTotal').textContent = fmt.format(analysis.total);
+    const heroLabel = byId('heroTotalLabel');
+    if (heroLabel) {
+      heroLabel.textContent = activeStateFilter ? `Vehículos en Estado ${activeStateFilter}` : 'Vehículos registrados';
+    }
     byId('heroPct').textContent = `${analysis.rate.toFixed(1)}%`;
-    byId('heroPct').style.color = tone.color;
-    byId('heroBarBg').className = `h-2 rounded-full overflow-hidden ${tone.soft}`;
+    byId('heroPct').style.color = '#0EA5E9';
+    byId('heroBarBg').className = 'h-2 rounded-full overflow-hidden bg-sky-50';
     byId('heroBar').style.width = `${Math.min(analysis.rate, 100)}%`;
-    byId('heroBar').style.backgroundColor = tone.color;
+    byId('heroBar').style.backgroundColor = '#0EA5E9';
     byId('heroOperativos').textContent = fmt.format(operativos ? operativos.count : 0);
     byId('heroInactivos').textContent = fmt.format(analysis.total - (operativos ? operativos.count : 0));
 
@@ -95,11 +159,11 @@ window.FleetUI = (function () {
       </div>`;
   }
 
-  function renderKpiCards(analysis) {
+  function renderKpiCards(analysis, activeStateFilter) {
     const cards = [];
     const estados = (analysis.porEstado || []).filter((e) => e.total > 0);
 
-    if (estados.length >= 2) {
+    if (!activeStateFilter && estados.length >= 2) {
       const mejor = estados.reduce((best, e) => (e.pct > best.pct ? e : best), estados[0]);
       const peor = estados.reduce((worst, e) => (e.pct < worst.pct ? e : worst), estados[0]);
 
@@ -121,6 +185,37 @@ window.FleetUI = (function () {
           chipClass: 'bg-red-50 text-red-600'
         }));
       }
+    } else if (activeStateFilter) {
+      if (analysis.fuel && analysis.fuel.length > 0) {
+        const topFuel = analysis.fuel[0];
+        cards.push(kpiCardHtml({
+          title: 'Combustible principal',
+          value: topFuel.label,
+          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium">${fmt.format(topFuel.count)} de ${fmt.format(analysis.total)} vhs · ${topFuel.pct.toFixed(1)}%</span>`,
+          icon: iconSvg('fire'),
+          chipClass: 'bg-amber-50 text-amber-600'
+        }));
+      }
+
+      if (analysis.clase && analysis.clase.length > 0) {
+        const topClase = analysis.clase[0];
+        cards.push(kpiCardHtml({
+          title: 'Clase principal',
+          value: topClase.label,
+          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium">${fmt.format(topClase.count)} de ${fmt.format(analysis.total)} vhs · ${topClase.pct.toFixed(1)}%</span>`,
+          icon: iconSvg('truck'),
+          chipClass: 'bg-indigo-50 text-indigo-600'
+        }));
+      } else if (analysis.verificado) {
+        const v = analysis.verificado;
+        cards.push(kpiCardHtml({
+          title: 'Datos verificados',
+          value: fmt.format(v.yes),
+          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium">de ${fmt.format(v.yes + v.no)} vehículos · ${v.pct.toFixed(1)}%</span>`,
+          icon: iconSvg('checkCircle'),
+          chipClass: 'bg-emerald-50 text-emerald-600'
+        }));
+      }
     }
 
     if (analysis.gpsCoverage) {
@@ -137,21 +232,28 @@ window.FleetUI = (function () {
     byId('kpiCardsContainer').innerHTML = cards.join('');
   }
 
-  function renderEstadoComparison(porEstado) {
+  function renderEstadoComparison(porEstado, activeStateFilter) {
+    const sectionContainer = byId('estadoSectionContainer');
+    if (activeStateFilter) {
+      if (sectionContainer) sectionContainer.classList.add('hidden');
+      return;
+    }
+    if (sectionContainer) sectionContainer.classList.remove('hidden');
+
     const items = porEstado || [];
     const box = byId('estadoChartBox');
     const empty = byId('estadoEmpty');
     const legend = byId('estadoLegend');
 
     if (!items.length) {
-      box.classList.add('hidden');
+      if (box) box.classList.add('hidden');
       if (legend) legend.classList.add('hidden');
-      empty.classList.remove('hidden');
+      if (empty) empty.classList.remove('hidden');
       return;
     }
 
-    empty.classList.add('hidden');
-    box.classList.remove('hidden');
+    if (empty) empty.classList.add('hidden');
+    if (box) box.classList.remove('hidden');
     if (legend) legend.classList.remove('hidden');
 
     FleetCharts.renderVBarStacked('estadoChartCanvas', items);
@@ -219,13 +321,13 @@ window.FleetUI = (function () {
     }
   }
 
-  function renderGerenciaSection(gerencia) {
-    const box = byId('gerenciaBox');
-    const empty = byId('gerenciaEmpty');
-    if (gerencia && gerencia.length > 0) {
+  function renderClaseSection(clase) {
+    const box = byId('claseBox');
+    const empty = byId('claseEmpty');
+    if (clase && clase.length > 0) {
       box.classList.remove('hidden');
       empty.classList.add('hidden');
-      FleetCharts.renderHBar('gerenciaCanvas', gerencia, '#0EA5E9');
+      FleetCharts.renderHBar('claseCanvas', clase, '#0EA5E9');
     } else {
       box.classList.add('hidden');
       empty.classList.remove('hidden');
@@ -235,18 +337,16 @@ window.FleetUI = (function () {
   function renderCompleteness(analysis) {
     const verified = analysis.verificado;
     const geoCount = analysis.porEstado ? analysis.porEstado.length : 0;
-    const gerenciaCount = analysis.gerencia ? analysis.gerencia.length : 0;
 
     const cards = [
       ['Total registros', fmt.format(analysis.total)],
       ['Vehículos verificados', verified ? `${fmt.format(verified.yes)} (${verified.pct.toFixed(0)}%)` : 'Sin datos'],
-      ['Estados cubiertos', geoCount ? fmt.format(geoCount) : 'Sin datos'],
-      ['Gerencias registradas', gerenciaCount ? fmt.format(gerenciaCount) : 'Sin datos']
+      ['Estados cubiertos', geoCount ? fmt.format(geoCount) : 'Sin datos']
     ];
 
     byId('completenessContainer').innerHTML = cards
       .map(([label, value]) => `
-        <div class="w-1/2 sm:w-1/4 p-2">
+        <div class="w-full sm:w-1/3 p-2">
         <div class="rounded-md border border-slate-200 bg-white p-3 flex flex-col gap-1 min-w-0 h-full">
           <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 truncate" title="${label}">${label}</span>
           <span class="text-sm sm:text-base font-bold text-slate-900 truncate" title="${value}">${value}</span>
@@ -256,15 +356,16 @@ window.FleetUI = (function () {
   }
 
   function render(result) {
-    const { analysis, file } = result;
+    const { analysis, file, activeStateFilter, rawRows, cols } = result;
 
+    renderStateFilter(rawRows, cols, activeStateFilter);
     renderQualityBanner(analysis.coverage);
-    renderHero(analysis);
+    renderHero(analysis, activeStateFilter);
     renderStatusList(analysis.stats);
-    renderKpiCards(analysis);
-    renderEstadoComparison(analysis.porEstado);
+    renderKpiCards(analysis, activeStateFilter);
+    renderEstadoComparison(analysis.porEstado, activeStateFilter);
     renderFuelSection(analysis.fuel);
-    renderGerenciaSection(analysis.gerencia);
+    renderClaseSection(analysis.clase);
     renderCompleteness(analysis);
 
     byId('emptyState').classList.add('hidden');

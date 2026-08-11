@@ -47,6 +47,26 @@ window.FleetCharts = (function () {
     });
   }
 
+  function countRightPlugin(items) {
+    return {
+      id: 'countRight',
+      afterDatasetsDraw(chart) {
+        const { ctx, scales } = chart;
+        ctx.save();
+        ctx.font = '600 11px Poppins, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#334155';
+        items.forEach((item, i) => {
+          const px = scales.x.getPixelForValue(item.count);
+          const py = scales.y.getPixelForValue(i);
+          ctx.fillText(item.count.toLocaleString('es-MX'), px + 6, py);
+        });
+        ctx.restore();
+      }
+    };
+  }
+
   function renderHBar(id, items, color) {
     destroy(id);
     const ctx = document.getElementById(id);
@@ -63,6 +83,7 @@ window.FleetCharts = (function () {
           barPercentage: 0.7
         }]
       },
+      plugins: [countRightPlugin(items)],
       options: {
         indexAxis: 'y',
         responsive: true,
@@ -81,8 +102,8 @@ window.FleetCharts = (function () {
         scales: {
           x: {
             beginAtZero: true,
-            ticks: { precision: 0, font: { size: 10 }, color: '#64748B' },
-            grid: { color: 'rgba(148,163,184,0.15)' }
+            display: false,
+            grace: '12%'
           },
           y: {
             grid: { display: false },

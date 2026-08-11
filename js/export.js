@@ -46,13 +46,19 @@ window.FleetExport = {
     const totalEl = document.getElementById('heroTotal');
     const fileName = fileNameEl ? fileNameEl.textContent.trim() : 'flota.csv';
     const totalRecords = totalEl ? totalEl.textContent.trim() : '0';
+    const badgeTextEl = document.getElementById('activeFilterText');
+    const badgeBox = document.getElementById('activeFilterBadge');
+    let filterSubtitle = '';
+    if (badgeBox && badgeTextEl && !badgeBox.classList.contains('hidden')) {
+      filterSubtitle = badgeTextEl.textContent.trim();
+    }
     const now = new Date();
     const dateStr = now.toLocaleDateString('es-VE', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     });
-    return { fileName, totalRecords, dateStr };
+    return { fileName, totalRecords, dateStr, filterSubtitle };
   },
 
   async ensurePdfFonts(pdf) {
@@ -140,7 +146,8 @@ window.FleetExport = {
     let wrapper = null;
     try {
       const reportArea = document.getElementById('reportArea');
-      const { fileName, totalRecords, dateStr } = this.getMetadata();
+      const { fileName, totalRecords, dateStr, filterSubtitle } = this.getMetadata();
+      const filterInfo = filterSubtitle ? ` &middot; <strong style="color: #0EA5E9; font-weight: 600;">${filterSubtitle}</strong>` : '';
 
       wrapper = document.createElement('div');
       wrapper.id = 'pngExportWrapper';
@@ -165,7 +172,7 @@ window.FleetExport = {
           <div>
             <h1 style="font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700; color: #0F172A; margin: 0; line-height: 1.2;">Tablero de Control de Flota</h1>
             <p style="font-size: 13px; color: #64748B; margin: 4px 0 0 0;">
-              Archivo: <strong style="color: #334155; font-weight: 600;">${fileName}</strong> &middot; Registros procesados: <strong style="color: #334155; font-weight: 600;">${totalRecords}</strong>
+              Archivo: <strong style="color: #334155; font-weight: 600;">${fileName}</strong> &middot; Registros procesados: <strong style="color: #334155; font-weight: 600;">${totalRecords}</strong>${filterInfo}
             </p>
           </div>
           <div style="text-align: right;">
@@ -282,10 +289,15 @@ window.FleetExport = {
         pdf.setTextColor(15, 23, 42);
         pdf.text('Tablero de Control de Flota', headerX + 7, marginY + 8);
 
+        const { fileName, totalRecords, dateStr, filterSubtitle } = this.getMetadata();
         setPdfFont('Poppins', 'normal');
         pdf.setFontSize(8.5);
-        const metaLabels = ['Archivo: ', ' · Registros procesados: '];
+        const metaLabels = ['Archivo: ', ' · Registros: '];
         const metaValues = [fileName, totalRecords];
+        if (filterSubtitle) {
+          metaLabels.push(' · ');
+          metaValues.push(filterSubtitle);
+        }
         let metaX = headerX + 7;
         for (let i = 0; i < metaLabels.length; i++) {
           setPdfFont('Poppins', 'normal');
@@ -294,7 +306,7 @@ window.FleetExport = {
           metaX += pdf.getTextWidth(metaLabels[i]);
 
           setPdfFont('Poppins', 'bold');
-          pdf.setTextColor(51, 65, 85);
+          pdf.setTextColor(i === 2 ? 14 : 51, i === 2 ? 165 : 65, i === 2 ? 233 : 85);
           pdf.text(metaValues[i], metaX, marginY + 14);
           metaX += pdf.getTextWidth(metaValues[i]);
         }

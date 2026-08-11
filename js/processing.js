@@ -8,12 +8,12 @@ window.FleetProcessing = {
       { key: 'status', label: 'Estatus del vehículo' },
       { key: 'geo', label: 'Ubicación geográfica (Estado)' },
       { key: 'fuel', label: 'Tipo de combustible' },
-      { key: 'gerencia', label: 'Gerencia / Unidad usuaria' },
+      { key: 'clase', label: 'Clase / Tipo de vehículo' },
       { key: 'gps', label: 'Cobertura GPS' },
       { key: 'verificado', label: 'Verificación de datos' }
     ];
 
-    const missingRequired = requiredDimensions.filter((d) => !cols || !cols[d.key]);
+    const missingRequired = requiredDimensions.filter((d) => !cols || (!cols[d.key] && (d.key !== 'clase' || !cols.modelo)));
     if (missingRequired.length > 0) {
       const missingNames = missingRequired.map((d) => d.label).join(', ');
       return {
@@ -87,7 +87,7 @@ window.FleetProcessing = {
       status: 'Estatus del vehículo',
       geo: 'Ubicación geográfica (Estado)',
       fuel: 'Tipo de combustible',
-      gerencia: 'Gerencia / Unidad usuaria',
+      clase: 'Clase de vehículo',
       gps: 'Cobertura GPS',
       verificado: 'Verificación de datos'
     };
@@ -95,8 +95,9 @@ window.FleetProcessing = {
     const detectedColumns = [];
     const missingColumns = [];
     for (const [key, label] of Object.entries(dimensionLabels)) {
-      if (cols[key]) {
-        detectedColumns.push({ key, label, colName: cols[key] });
+      const colKey = cols[key] || (key === 'clase' ? cols.modelo : null);
+      if (colKey) {
+        detectedColumns.push({ key, label, colName: colKey });
       } else {
         missingColumns.push({ key, label });
       }
@@ -104,7 +105,8 @@ window.FleetProcessing = {
 
     const geoData = this.distribution(rows, cols.geo, 10);
     const fuelData = this.distribution(rows, cols.fuel, null);
-    const gerenciaData = this.distribution(rows, cols.gerencia, null);
+    const claseColTarget = cols.clase || cols.modelo;
+    const claseData = this.distribution(rows, claseColTarget, 10);
     const gpsData = this.coverage(rows, cols.gps);
     const verificadoData = this.coverage(rows, cols.verificado);
     const porEstadoData = this.operatividadPorEstado(rows, cols);
@@ -123,7 +125,7 @@ window.FleetProcessing = {
       counts,
       geo: geoData,
       fuel: fuelData,
-      gerencia: gerenciaData,
+      clase: claseData,
       gpsCoverage: gpsData,
       verificado: verificadoData,
       porEstado: porEstadoData,
@@ -136,7 +138,7 @@ window.FleetProcessing = {
         unclassifiedPct,
         hasGeo: !!(porEstadoData && porEstadoData.length > 0),
         hasFuel: !!(fuelData && fuelData.length > 0),
-        hasGerencia: !!(gerenciaData && gerenciaData.length > 0),
+        hasClase: !!(claseData && claseData.length > 0),
         hasGps: !!gpsData,
         hasVerificado: !!verificadoData
       }
