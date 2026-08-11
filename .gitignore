@@ -3,8 +3,10 @@ dist/
 .DS_Store
 *Zone.Identifier
 
-# PLAN.md: documento de planificación local, no se versiona.
+# Documentos locales de planificación y agentes, no se versionan.
 PLAN.md
+AGENTS.md
+agents.md
 
 # Datos sensibles: los CSV reales de la flota nunca se suben.
 *.csv
