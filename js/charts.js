@@ -124,7 +124,7 @@ window.FleetCharts = (function () {
         labels: items.map((i) => i.shortLabel || i.label),
         datasets: [
           { label: 'Operativos', data: items.map((i) => i.operativos), backgroundColor: '#10B981', borderRadius: 0 },
-          { label: 'Inoperativos', data: items.map((i) => i.inactivos), backgroundColor: '#EF4444', borderRadius: 4 }
+          { label: 'No operativos', data: items.map((i) => i.inactivos), backgroundColor: '#EF4444', borderRadius: 4 }
         ]
       },
       plugins: [pctTopPlugin(items)],
