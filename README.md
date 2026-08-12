@@ -2,7 +2,7 @@
 
 # SCF · Tablero de Control de Flota · Dashboard Generator
 
-Generador de tableros de control y analítica visual de flota vehicular **100% Client-Side**. Diseñado para procesar exportaciones CSV y planillas Excel (`.xlsx`, `.xls` como AppSheet) de gran volumen (hasta 30 MB / +10 000 registros) directamente en el navegador sin enviar datos a servidores externos.
+Generador de tableros de control y analítica visual de flota vehicular **100% Client-Side**. Diseñado para procesar exportaciones CSV y planillas Excel (`.xlsx`, `.xls`) de gran volumen (hasta 30 MB / +10 000 registros) directamente en el navegador sin enviar datos a servidores externos.
 
 ---
 

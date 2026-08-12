@@ -96,10 +96,10 @@ window.FleetUI = (function () {
       const count = activeState ? activeState.count : 0;
       badgeText.textContent = `Filtro: Estado ${label}`;
       badge.classList.remove('hidden');
-      badge.classList.add('inline-flex');
+      badge.classList.add('flex');
     } else {
       badge.classList.add('hidden');
-      badge.classList.remove('inline-flex');
+      badge.classList.remove('flex');
     }
   }
 
@@ -133,16 +133,16 @@ window.FleetUI = (function () {
       .filter((s) => s.count > 0)
       .sort((a, b) => b.count - a.count)
       .map((s) => `
-        <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
           <div class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${s.color}"></div>
-          <span class="text-xs sm:text-sm text-slate-700 flex-1 min-w-0 truncate">${escapeHtml(s.label)}</span>
-          <div class="flex items-center gap-2 flex-1 max-w-[120px] sm:max-w-[200px]">
+          <span class="text-slate-700 flex-1 min-w-0 truncate font-medium" title="${escapeHtml(s.label)}">${escapeHtml(s.label)}</span>
+          <div class="flex items-center gap-2 flex-1 min-w-[36px] sm:min-w-[60px] max-w-[100px] sm:max-w-[200px]">
             <div class="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-200">
               <div class="h-full rounded-full transition-all duration-300" style="width:${s.pct}%; background:${s.color}"></div>
             </div>
           </div>
-          <span class="text-xs sm:text-sm font-semibold text-slate-500 shrink-0 w-11 sm:w-14 text-right">${s.pct.toFixed(1)}%</span>
-          <span class="text-xs sm:text-sm font-bold text-slate-800 shrink-0 w-8 sm:w-10 text-right">${fmt.format(s.count)}</span>
+          <span class="font-semibold text-slate-500 shrink-0 w-11 sm:w-14 text-right">${s.pct.toFixed(1)}%</span>
+          <span class="font-bold text-slate-800 shrink-0 w-10 sm:w-14 text-right min-w-[36px]">${fmt.format(s.count)}</span>
         </div>`)
       .join('');
   }
@@ -154,14 +154,14 @@ window.FleetUI = (function () {
       <div class="w-full sm:w-1/2 lg:w-1/3 p-2">
       <div class="rounded-md border border-slate-200 bg-white transition-all duration-150 hover:shadow-xs h-full">
         <div class="p-3 flex items-center justify-between gap-3">
-          <div class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">${safeTitle}</span>
-            <div class="flex items-baseline gap-1.5 min-w-0">
-              <span class="text-lg sm:text-xl font-bold leading-none text-slate-900 truncate">${safeValue}</span>
+          <div class="flex flex-col gap-1 min-w-0 flex-1">
+            <span class="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate" title="${safeTitle}">${safeTitle}</span>
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 min-w-0">
+              <span class="text-base sm:text-xl font-bold leading-tight text-slate-900 break-words" title="${safeValue}">${safeValue}</span>
               ${sub}
             </div>
           </div>
-          <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${chipClass}">${icon}</div>
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 ${chipClass}">${icon}</div>
         </div>
       </div>
       </div>`;
@@ -270,12 +270,12 @@ window.FleetUI = (function () {
   function legendHtml(items) {
     return items
       .map((item) => `
-        <div class="flex items-center justify-between gap-3">
-          <span class="flex items-center gap-1.5 text-sm text-slate-600 truncate">
+        <div class="flex items-center justify-between gap-3 text-xs sm:text-sm">
+          <span class="flex items-center gap-1.5 text-slate-600 min-w-0 truncate">
             <span class="w-2.5 h-2.5 rounded-full inline-block shrink-0" style="background:${escapeHtml(item.color)}"></span>
-            ${escapeHtml(item.label)}
+            <span class="truncate" title="${escapeHtml(item.label)}">${escapeHtml(item.label)}</span>
           </span>
-          <span class="text-sm font-semibold text-slate-900">${fmt.format(item.count)}</span>
+          <span class="font-semibold text-slate-900 shrink-0 ml-2">${fmt.format(item.count)}</span>
         </div>`)
       .join('');
   }
@@ -358,7 +358,7 @@ window.FleetUI = (function () {
         const safeValue = escapeHtml(value);
         return `
           <div class="w-full sm:w-1/3 p-2">
-          <div class="rounded-md border border-slate-200 bg-white p-3 flex flex-col gap-1 min-w-0 h-full">
+          <div class="rounded-md border border-slate-200 bg-white p-3 sm:p-4 flex flex-col gap-1 min-w-0 h-full">
             <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 truncate" title="${safeLabel}">${safeLabel}</span>
             <span class="text-sm sm:text-base font-bold text-slate-900 truncate" title="${safeValue}">${safeValue}</span>
           </div>

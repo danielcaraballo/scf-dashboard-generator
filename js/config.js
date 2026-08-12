@@ -51,10 +51,11 @@ window.FleetConfig = {
   VERIFICADO_COLUMN_CANDIDATES: ['verificado'],
 
   STATE_ABBREVIATIONS: {
-    'NUEVA ESPARTA': 'NUEVA E.',
-    'DELTA AMACURO': 'DELTA A.',
-    'DISTRITO CAPITAL': 'DTO. CAPITAL',
-    'LA GUAIRA': 'LA GUAIRA'
+    'REGION NORTE': 'R. NORTE',
+    'REGION SUR': 'R. SUR',
+    'REGION ESTE': 'R. ESTE',
+    'REGION OESTE': 'R. OESTE',
+    'REGION CENTRAL': 'R. CENTRAL'
   },
 
   normalize(value) {

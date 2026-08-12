@@ -107,7 +107,14 @@ window.FleetCharts = (function () {
           },
           y: {
             grid: { display: false },
-            ticks: { font: { size: 11 }, color: '#475569' }
+            ticks: {
+              font: { size: 11 },
+              color: '#475569',
+              callback(val) {
+                const label = this.getLabelForValue(val);
+                return label.length > 20 ? label.slice(0, 18) + '…' : label;
+              }
+            }
           }
         }
       }
@@ -180,8 +187,9 @@ window.FleetCharts = (function () {
             grid: { display: false },
             ticks: {
               autoSkip: false,
-              maxRotation: 0,
-              font: { size: 7.5 },
+              maxRotation: 45,
+              minRotation: 0,
+              font: { size: 8 },
               color: '#64748B',
               padding: 2,
               callback(val) {

@@ -41,10 +41,6 @@ window.FleetExport = (function () {
   }
 
   function getMetadata() {
-    const fileNameEl = document.getElementById('fileName');
-    const totalEl = document.getElementById('heroTotal');
-    const fileName = fileNameEl ? fileNameEl.textContent.trim() : 'flota.csv';
-    const totalRecords = totalEl ? totalEl.textContent.trim() : '0';
     const badgeTextEl = document.getElementById('activeFilterText');
     const badgeBox = document.getElementById('activeFilterBadge');
     let filterSubtitle = '';
@@ -52,12 +48,12 @@ window.FleetExport = (function () {
       filterSubtitle = badgeTextEl.textContent.trim();
     }
     const now = new Date();
-    const dateStr = now.toLocaleDateString('es-VE', {
+    const dateStr = now.toLocaleDateString('es', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     });
-    return { fileName, totalRecords, dateStr, filterSubtitle };
+    return { dateStr, filterSubtitle };
   }
 
   async function ensurePdfFonts(pdf) {
@@ -145,11 +141,9 @@ window.FleetExport = (function () {
     let wrapper = null;
     try {
       const reportArea = document.getElementById('reportArea');
-      const { fileName, totalRecords, dateStr, filterSubtitle } = getMetadata();
+      const { dateStr, filterSubtitle } = getMetadata();
       const escapeHtml = (window.FleetConfig && window.FleetConfig.escapeHtml) || ((s) => String(s ?? ''));
-      const safeFileName = escapeHtml(fileName);
       const safeFilterSub = escapeHtml(filterSubtitle);
-      const filterInfo = safeFilterSub ? ` &middot; <strong style="color: #0EA5E9; font-weight: 600;">${safeFilterSub}</strong>` : '';
 
       wrapper = document.createElement('div');
       wrapper.id = 'pngExportWrapper';
@@ -166,20 +160,19 @@ window.FleetExport = (function () {
       `;
 
       const clonedContent = reportArea.cloneNode(true);
+      clonedContent.querySelectorAll('[data-report-exclude]').forEach((el) => el.remove());
       clonedContent.classList.remove('hidden');
       clonedContent.style.display = 'block';
 
       wrapper.innerHTML = `
-        <div style="margin-bottom: 24px; background: #ffffff; border-radius: 6px; border: 1px solid #E2E8F0; padding: 24px 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;">
+        <div style="margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid #0EA5E9; display: flex; align-items: flex-end; justify-content: space-between;">
           <div>
-            <h1 style="font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700; color: #0F172A; margin: 0; line-height: 1.2;">Tablero de Control de Flota</h1>
-            <p style="font-size: 13px; color: #64748B; margin: 4px 0 0 0;">
-              Archivo: <strong style="color: #334155; font-weight: 600;">${safeFileName}</strong> &middot; Registros procesados: <strong style="color: #334155; font-weight: 600;">${totalRecords}</strong>${filterInfo}
-            </p>
+            <h1 style="font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 700; color: #0F172A; margin: 0; line-height: 1.2;">Tablero de Control de Flota</h1>
+            ${safeFilterSub ? `<p style="font-size: 13px; color: #0EA5E9; font-weight: 600; margin: 6px 0 0 0;">${safeFilterSub}</p>` : ''}
           </div>
           <div style="text-align: right;">
-            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8; display: block; margin-bottom: 4px;">Fecha de Emisión</span>
-            <span style="font-size: 13px; font-weight: 600; color: #334155; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 6px 12px; border-radius: 8px; display: inline-block;">${dateStr}</span>
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8; display: block; margin-bottom: 2px;">Fecha de Emisión</span>
+            <span style="font-size: 13px; font-weight: 600; color: #334155;">${dateStr}</span>
           </div>
         </div>
         <div id="pngReportBody" class="space-y-5">
@@ -220,25 +213,27 @@ window.FleetExport = (function () {
 
     let sectionWrappers = [];
     try {
-      const sections = document.querySelectorAll('#reportArea [data-report-section]');
-      const { fileName, totalRecords, dateStr, filterSubtitle } = getMetadata();
+      const sections = Array.from(
+        document.querySelectorAll('#reportArea [data-report-section]')
+      ).filter((el) => !el.hasAttribute('data-report-exclude'));
+      const { dateStr, filterSubtitle } = getMetadata();
 
-      const pdf = new jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pdf = new jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
       let fontsReady = false;
       try {
         fontsReady = await ensurePdfFonts(pdf);
       } catch (err) {
         fontsReady = false;
       }
-      const pdfW = 297;
-      const pdfH = 210;
+      const pdfW = 279.4;
+      const pdfH = 215.9;
       const marginX = 14;
-      const marginY = 14;
+      const marginY = 12;
       const contentW = pdfW - marginX * 2;
       const headerW = contentW;
       const headerX = marginX;
-      const headerH = 24;
-      const footerH = 10;
+      const headerH = 18;
+      const footerH = 8;
 
       const capturedSections = [];
 
@@ -254,7 +249,9 @@ window.FleetExport = (function () {
           box-sizing: border-box;
           font-family: 'Poppins', sans-serif;
         `;
+
         const cloned = section.cloneNode(true);
+        cloned.querySelectorAll('[data-report-exclude]').forEach((el) => el.remove());
         wrap.appendChild(cloned);
         document.body.appendChild(wrap);
         copyCanvases(section, wrap);
@@ -279,61 +276,35 @@ window.FleetExport = (function () {
       }
 
       const drawHeader = () => {
-        const boxH = 20;
-        const cardRadius = 2;
-        pdf.setFillColor(255, 255, 255);
-        pdf.setDrawColor(226, 232, 240);
-        pdf.setLineWidth(0.4);
-        pdf.roundedRect(headerX, marginY, headerW, boxH, cardRadius, cardRadius, 'FD');
-
         setPdfFont('Poppins', 'bold');
         pdf.setFontSize(12);
         pdf.setTextColor(15, 23, 42);
-        pdf.text('Tablero de Control de Flota', headerX + 7, marginY + 8);
+        pdf.text('Tablero de Control de Flota', headerX, marginY + 4.5);
 
-        setPdfFont('Poppins', 'normal');
-        pdf.setFontSize(8.5);
-        const metaLabels = ['Archivo: ', ' · Registros: '];
-        const metaValues = [fileName, totalRecords];
-        if (filterSubtitle) {
-          metaLabels.push(' · ');
-          metaValues.push(filterSubtitle);
-        }
-        let metaX = headerX + 7;
-        for (let i = 0; i < metaLabels.length; i++) {
-          setPdfFont('Poppins', 'normal');
-          pdf.setTextColor(100, 116, 139);
-          pdf.text(metaLabels[i], metaX, marginY + 14);
-          metaX += pdf.getTextWidth(metaLabels[i]);
-
-          setPdfFont('Poppins', 'bold');
-          pdf.setTextColor(i === 2 ? 14 : 51, i === 2 ? 165 : 65, i === 2 ? 233 : 85);
-          pdf.text(metaValues[i], metaX, marginY + 14);
-          metaX += pdf.getTextWidth(metaValues[i]);
-        }
-
-        const labelText = 'FECHA DE EMISIÓN';
+        const dateLabel = 'FECHA DE EMISIÓN';
         setPdfFont('Poppins', 'bold');
         pdf.setFontSize(6.5);
         pdf.setTextColor(148, 163, 184);
-        const labelWidth = pdf.getTextWidth(labelText);
-        pdf.text(labelText, headerX + headerW - 7 - labelWidth, marginY + 6.5);
+        const labelW = pdf.getTextWidth(dateLabel);
+        pdf.text(dateLabel, headerX + headerW - labelW, marginY + 3.5);
 
-        const badgeText = dateStr;
         setPdfFont('Poppins', 'bold');
-        pdf.setFontSize(8);
-        const badgeW = pdf.getTextWidth(badgeText) + 8;
-        const badgeH = 6.5;
-        const badgeX = headerX + headerW - 7 - badgeW;
-        const badgeY = marginY + 8.5;
-        pdf.setFillColor(241, 245, 249);
-        pdf.setDrawColor(226, 232, 240);
-        pdf.setLineWidth(0.4);
-        pdf.roundedRect(badgeX, badgeY, badgeW, badgeH, 1, 1, 'FD');
-
+        pdf.setFontSize(8.5);
         pdf.setTextColor(51, 65, 85);
-        pdf.text(badgeText, badgeX + 4, badgeY + 4.3);
-      }
+        const dateW = pdf.getTextWidth(dateStr);
+        pdf.text(dateStr, headerX + headerW - dateW, marginY + 8);
+
+        if (filterSubtitle) {
+          setPdfFont('Poppins', 'bold');
+          pdf.setFontSize(8.5);
+          pdf.setTextColor(14, 165, 233);
+          pdf.text(filterSubtitle, headerX, marginY + 11.5);
+        }
+
+        pdf.setDrawColor(14, 165, 233);
+        pdf.setLineWidth(0.5);
+        pdf.line(headerX, marginY + 14.5, headerX + headerW, marginY + 14.5);
+      };
 
       let cursorY = marginY + headerH;
 
@@ -350,7 +321,7 @@ window.FleetExport = (function () {
         }
 
         pdf.addImage(s.imgData, 'JPEG', marginX, cursorY, contentW, s.imgH);
-        cursorY += s.imgH + 5;
+        cursorY += s.imgH + 4;
       }
 
       const totalPages = pdf.getNumberOfPages();

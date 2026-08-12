@@ -53,32 +53,32 @@
     </style>
   </head>
 
-  <body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen">
+  <body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen overflow-x-hidden">
     <header
       class="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-20"
     >
       <div
-        class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center gap-4"
+        class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
       >
         <div class="flex-1 min-w-0">
           <p
-            class="text-[11px] font-semibold uppercase tracking-widest text-sky-600"
+            class="text-[11px] font-semibold uppercase tracking-widest text-sky-600 truncate"
           >
             Generador de Tableros &middot; Análisis de Flota
           </p>
           <h1
-            class="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight"
+            class="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight truncate"
           >
             Tablero de Control de Flota
           </h1>
-          <p id="dragHint" class="hidden text-sm text-slate-500 truncate">
+          <p id="dragHint" class="hidden text-xs sm:text-sm text-slate-500 truncate mt-0.5">
             Archivo cargado:
             <span id="fileName" class="font-medium text-slate-700">—</span>
             <span id="fileSize" class="text-slate-400"></span>
           </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <span id="loadStatus" class="hidden text-sm text-slate-600">
             <span
               class="w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full animate-spin inline-block"
@@ -86,14 +86,14 @@
             <span id="loadStatusText">Procesando…</span>
           </span>
 
-          <div id="actionButtons" class="hidden items-center gap-3">
+          <div id="actionButtons" class="hidden flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               id="loadBtn"
               type="button"
-              class="inline-flex items-center gap-2 rounded-md bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white text-sm font-semibold px-4 py-2.5 shadow-sm transition-colors"
+              class="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-md bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm transition-colors whitespace-nowrap flex-1 sm:flex-none"
             >
               <svg
-                class="w-4 h-4"
+                class="w-4 h-4 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -106,17 +106,17 @@
                   d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16"
                 />
               </svg>
-              Cargar otro archivo
+              <span>Cargar otro archivo</span>
             </button>
 
             <button
               id="exportBtn"
               type="button"
               disabled
-              class="inline-flex items-center gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold px-4 py-2.5 border border-slate-200 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+              class="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-200 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white whitespace-nowrap flex-1 sm:flex-none"
             >
               <svg
-                class="w-4 h-4"
+                class="w-4 h-4 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -129,17 +129,17 @@
                   d="M12 8v8m0 0l-4-4m4 4l4-4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
                 />
               </svg>
-              Exportar PDF
+              <span>Exportar PDF</span>
             </button>
 
             <button
               id="imageBtn"
               type="button"
               disabled
-              class="inline-flex items-center gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold px-4 py-2.5 border border-slate-200 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+              class="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-200 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white whitespace-nowrap flex-1 sm:flex-none"
             >
               <svg
-                class="w-4 h-4"
+                class="w-4 h-4 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -152,7 +152,7 @@
                   d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
                 />
               </svg>
-              Exportar imagen
+              <span>Exportar imagen</span>
             </button>
           </div>
 
@@ -175,20 +175,20 @@
 
       <section
         id="emptyState"
-        class="rounded-md border-2 border-dashed border-slate-300 bg-white p-10 sm:p-16 text-center"
+        class="rounded-md border-2 border-dashed border-slate-300 bg-white p-6 sm:p-12 md:p-16 text-center transition-all duration-200"
       >
         <div
           id="dropZone"
-          class="cursor-pointer select-none"
+          class="cursor-pointer select-none focus:outline-none"
           role="button"
           tabindex="0"
           aria-label="Zona de carga de CSV"
         >
           <div
-            class="mx-auto w-16 h-16 rounded-md bg-sky-50 flex items-center justify-center mb-5"
+            class="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-md bg-sky-50 flex items-center justify-center mb-4 sm:mb-5"
           >
             <svg
-              class="w-8 h-8 text-sky-500"
+              class="w-7 h-7 sm:w-8 sm:h-8 text-sky-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -202,14 +202,14 @@
               />
             </svg>
           </div>
-          <h2 class="text-lg font-bold text-slate-900">
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">
             Generar tablero de flota
           </h2>
-          <p class="text-sm text-slate-500 mt-1 max-w-md mx-auto">
+          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
             Arrastra tu archivo o haz clic para seleccionarlo y obtén un
             análisis completo con gráficos.
           </p>
-          <p class="text-xs text-slate-400 mt-3">
+          <p class="text-[11px] sm:text-xs text-slate-400 mt-3">
             .csv, .xlsx, .xls &middot; hasta 30&nbsp;MB &middot; 10&nbsp;000+
             registros
           </p>
@@ -219,13 +219,14 @@
       <section id="reportArea" class="hidden space-y-5">
         <div
           id="filterBarBox"
+          data-report-exclude
           class="hidden rounded-md border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs"
         >
           <div
             class="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
           >
-            <div class="flex items-center gap-3 flex-wrap">
-              <div class="flex items-center gap-2">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <div class="flex items-center gap-2 shrink-0">
                 <svg
                   class="w-4 h-4 text-sky-500 shrink-0"
                   fill="none"
@@ -249,16 +250,16 @@
               </div>
               <select
                 id="stateFilterSelect"
-                class="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer min-w-[200px] sm:min-w-[240px] transition-all"
+                class="w-full sm:w-auto rounded-md border border-slate-300 bg-white px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer min-w-0 sm:min-w-[240px] transition-all"
               >
                 <option value="">Todos los Estados</option>
               </select>
             </div>
-            <div id="activeFilterBadge" class="hidden items-center gap-2">
+            <div id="activeFilterBadge" class="hidden items-center gap-2 flex-wrap">
               <span
                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200"
               >
-                <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                <span class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
                 <span id="activeFilterText">Todos los Estados</span>
               </span>
               <button
@@ -274,200 +275,204 @@
 
         <div
           id="qualityBannerBox"
-          class="hidden rounded-md border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900 shadow-xs"
+          data-report-exclude
+          class="hidden rounded-md border border-amber-200 bg-amber-50/80 p-3.5 sm:p-4 text-xs sm:text-sm text-amber-900 shadow-xs"
         ></div>
 
-        <div class="flex flex-col lg:flex-row -m-2" data-report-section="kpis">
-          <div class="w-full lg:w-1/2 p-2">
-            <div
-              class="rounded-md border border-slate-200 bg-white p-4 sm:p-6 h-full flex flex-col"
-            >
+        <div id="page1Container" class="space-y-5" data-report-section="page1">
+          <div class="flex flex-col lg:flex-row -m-2">
+            <div class="w-full lg:w-1/2 p-2">
               <div
-                id="heroTotal"
-                class="text-4xl sm:text-5xl font-bold leading-none text-slate-900 tracking-tight"
+                class="rounded-md border border-slate-200 bg-white p-4 sm:p-5 h-full flex flex-col"
               >
-                0
-              </div>
-              <div
-                id="heroTotalLabel"
-                class="text-xs font-semibold uppercase tracking-wider text-slate-500 mt-1 mb-4 sm:mb-5"
-              >
-                Vehículos registrados
-              </div>
-              <div
-                class="border-t border-slate-200 pt-4 flex-1 flex flex-col justify-between gap-4"
-              >
-                <div>
-                  <div class="flex items-baseline gap-2 mb-1.5">
-                    <span
-                      id="heroPct"
-                      class="text-xl sm:text-2xl font-bold leading-none tracking-tight"
-                      >0.0%</span
-                    >
-                    <span class="text-xs text-slate-500"
-                      >Operatividad general</span
-                    >
-                  </div>
-                  <div
-                    id="heroBarBg"
-                    class="h-2 rounded-full overflow-hidden bg-sky-50"
-                  >
-                    <div
-                      id="heroBar"
-                      class="h-full rounded-full transition-all duration-500"
-                      style="width: 0%; background: #0ea5e9"
-                    ></div>
-                  </div>
+                <div
+                  id="heroTotal"
+                  class="text-3xl sm:text-4xl lg:text-5xl font-bold leading-none text-slate-900 tracking-tight"
+                >
+                  0
                 </div>
-                <div class="mt-4 hidden">
-                  <div class="flex items-baseline gap-2 mb-1.5">
-                    <span
-                      id="heroActivePct"
-                      class="text-xl sm:text-2xl font-bold leading-none tracking-tight"
-                      >0.0%</span
-                    >
-                    <span class="text-xs text-slate-500"
-                      >Operatividad de flota activa (Operativo + En reparación +
-                      No operativo)</span
-                    >
-                  </div>
-                  <div
-                    id="heroActiveBarBg"
-                    class="h-2 rounded-full overflow-hidden bg-slate-100"
-                  >
-                    <div
-                      id="heroActiveBar"
-                      class="h-full rounded-full transition-all duration-500"
-                      style="width: 0%; background: #10b981"
-                    ></div>
-                  </div>
+                <div
+                  id="heroTotalLabel"
+                  class="text-xs font-semibold uppercase tracking-wider text-slate-500 mt-1 mb-3"
+                >
+                  Vehículos registrados
                 </div>
-                <div class="flex items-center gap-4 sm:gap-6 flex-wrap">
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"
-                    ></div>
-                    <span class="text-xs sm:text-sm">
-                      <strong
-                        id="heroOperativos"
-                        class="text-emerald-600 font-bold"
-                        >0</strong
+                <div
+                  class="border-t border-slate-200 pt-3.5 flex-1 flex flex-col justify-between gap-4"
+                >
+                  <div>
+                    <div class="flex items-baseline gap-2 mb-1.5">
+                      <span
+                        id="heroPct"
+                        class="text-xl sm:text-2xl font-bold leading-none tracking-tight"
+                        >0.0%</span
                       >
-                      <span class="text-slate-500 ml-1">Operativos</span>
-                    </span>
+                      <span class="text-xs text-slate-500"
+                        >Operatividad general</span
+                      >
+                    </div>
+                    <div
+                      id="heroBarBg"
+                      class="h-2 rounded-full overflow-hidden bg-sky-50"
+                    >
+                      <div
+                        id="heroBar"
+                        class="h-full rounded-full transition-all duration-500"
+                        style="width: 0%; background: #0ea5e9"
+                      ></div>
+                    </div>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"
-                    ></div>
-                    <span class="text-xs sm:text-sm">
-                      <strong id="heroInactivos" class="text-red-600 font-bold"
-                        >0</strong
+                  <div class="mt-4 hidden">
+                    <div class="flex items-baseline gap-2 mb-1.5">
+                      <span
+                        id="heroActivePct"
+                        class="text-xl sm:text-2xl font-bold leading-none tracking-tight"
+                        >0.0%</span
                       >
-                      <span class="text-slate-500 ml-1">No operativos</span>
-                    </span>
+                      <span class="text-xs text-slate-500"
+                        >Operatividad de flota activa (Operativo + En reparación +
+                        No operativo)</span
+                      >
+                    </div>
+                    <div
+                      id="heroActiveBarBg"
+                      class="h-2 rounded-full overflow-hidden bg-slate-100"
+                    >
+                      <div
+                        id="heroActiveBar"
+                        class="h-full rounded-full transition-all duration-500"
+                        style="width: 0%; background: #10b981"
+                      ></div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-4 sm:gap-6 flex-wrap">
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"
+                      ></div>
+                      <span class="text-xs sm:text-sm">
+                        <strong
+                          id="heroOperativos"
+                          class="text-emerald-600 font-bold"
+                          >0</strong
+                        >
+                        <span class="text-slate-500 ml-1">Operativos</span>
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"
+                      ></div>
+                      <span class="text-xs sm:text-sm">
+                        <strong id="heroInactivos" class="text-red-600 font-bold"
+                          >0</strong
+                        >
+                        <span class="text-slate-500 ml-1">No operativos</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <div class="w-full lg:w-1/2 p-2">
+              <div
+                class="rounded-md border border-slate-200 bg-white p-4 sm:p-5 h-full flex flex-col"
+              >
+                <h3
+                  class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3"
+                >
+                  Distribución por estatus
+                </h3>
+                <div
+                  id="statusList"
+                  class="flex-1 flex flex-col gap-2.5 min-h-0"
+                ></div>
+              </div>
+            </div>
           </div>
 
-          <div class="w-full lg:w-1/2 p-2">
-            <div
-              class="rounded-md border border-slate-200 bg-white p-4 sm:p-5 h-full flex flex-col"
-            >
-              <h3
-                class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4"
-              >
-                Distribución por estatus
-              </h3>
-              <div
-                id="statusList"
-                class="flex-1 flex flex-col gap-3 min-h-0"
-              ></div>
+          <div
+            id="kpiCardsContainer"
+            class="flex flex-wrap -m-2"
+          ></div>
+
+          <div id="estadoSectionContainer" class="flex flex-wrap -m-2">
+            <div class="w-full p-2">
+              <div class="rounded-md border border-slate-200 bg-white p-4 sm:p-5">
+                <div
+                  class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3"
+                >
+                  <h3
+                    class="text-xs font-semibold uppercase tracking-wider text-slate-500"
+                  >
+                    Operatividad por estado
+                  </h3>
+                  <div
+                    id="estadoLegend"
+                    class="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-600"
+                  >
+                    <span class="inline-flex items-center gap-1.5">
+                      <span
+                        class="w-2.5 h-2.5 rounded-full bg-emerald-500"
+                      ></span>
+                      Operativos
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                      <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                      No operativos
+                    </span>
+                  </div>
+                </div>
+                <div id="estadoChartBox" class="h-60 sm:h-64 w-full">
+                  <canvas
+                    id="estadoChartCanvas"
+                    aria-label="Operatividad por estado (operativos vs no operativos)"
+                    role="img"
+                  ></canvas>
+                </div>
+                <div
+                  id="estadoEmpty"
+                  class="hidden py-12 text-center text-sm text-slate-400"
+                >
+                  <svg
+                    class="w-8 h-8 mx-auto mb-2 text-slate-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                    />
+                  </svg>
+                  Columna de ubicación geográfica (Estado) no detectada en el CSV.
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div
-          id="kpiCardsContainer"
-          class="flex flex-wrap -m-2"
-          data-report-section="kpi-cards"
-        ></div>
-
-        <div id="estadoSectionContainer" class="flex flex-wrap -m-2" data-report-section="analysis">
-          <div class="w-full p-2">
-            <div class="rounded-md border border-slate-200 bg-white p-5">
-              <div
-                class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4"
-              >
-                <h3
-                  class="text-xs font-semibold uppercase tracking-wider text-slate-500"
-                >
-                  Operatividad por estado
-                </h3>
-                <div
-                  id="estadoLegend"
-                  class="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-600"
-                >
-                  <span class="inline-flex items-center gap-1.5">
-                    <span
-                      class="w-2.5 h-2.5 rounded-full bg-emerald-500"
-                    ></span>
-                    Operativos
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                    No operativos
-                  </span>
-                </div>
-              </div>
-              <div id="estadoChartBox" class="h-96">
-                <canvas
-                  id="estadoChartCanvas"
-                  aria-label="Operatividad por estado (operativos vs no operativos)"
-                  role="img"
-                ></canvas>
-              </div>
-              <div
-                id="estadoEmpty"
-                class="hidden py-12 text-center text-sm text-slate-400"
-              >
-                <svg
-                  class="w-8 h-8 mx-auto mb-2 text-slate-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
-                  />
-                </svg>
-                Columna de ubicación geográfica (Estado) no detectada en el CSV.
-              </div>
-            </div>
-          </div>
-
+        <div id="secondaryChartsContainer" class="flex flex-wrap -m-2" data-report-section="page2">
           <div class="w-full lg:w-1/3 p-2">
             <div
-              class="rounded-md border border-slate-200 bg-white p-5 h-full flex flex-col justify-between"
+              class="rounded-md border border-slate-200 bg-white p-4 sm:p-5 h-full flex flex-col justify-between"
             >
               <h3
-                class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4"
+                class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3"
               >
                 Distribución por combustible
               </h3>
               <div id="fuelBox">
-                <div class="relative h-40">
+                <div class="relative h-40 sm:h-44">
                   <canvas
                     id="fuelCanvas"
                     aria-label="Distribución por tipo de combustible"
@@ -500,14 +505,14 @@
 
           <div class="w-full lg:w-2/3 p-2">
             <div
-              class="rounded-md border border-slate-200 bg-white p-5 h-full flex flex-col justify-between"
+              class="rounded-md border border-slate-200 bg-white p-4 sm:p-5 h-full flex flex-col justify-between"
             >
               <h3
-                class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4"
+                class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3"
               >
                 Distribución por clase de vehículo
               </h3>
-              <div id="claseBox" class="h-64">
+              <div id="claseBox" class="h-56 sm:h-64">
                 <canvas
                   id="claseCanvas"
                   aria-label="Distribución por clase de vehículo"
@@ -538,8 +543,9 @@
         </div>
 
         <div
-          class="rounded-md border border-slate-200 bg-white p-5"
+          class="rounded-md border border-slate-200 bg-white p-4 sm:p-5"
           data-report-section="completeness"
+          data-report-exclude
         >
           <h3
             class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4"
@@ -550,7 +556,7 @@
         </div>
       </section>
 
-      <footer class="text-xs text-slate-400 pt-2 pb-6 text-center space-y-1">
+      <footer class="text-xs text-slate-400 pt-2 pb-6 text-center space-y-1 px-4">
         <p>
           Tablero de Control de Flota &middot; Análisis interactivo y generación
           de reportes.
