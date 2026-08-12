@@ -4,21 +4,18 @@ window.FleetProcessing = {
       return { isValid: false, reason: 'El archivo CSV no contiene registros de datos para analizar.' };
     }
 
-    const requiredDimensions = [
-      { key: 'status', label: 'Estatus del vehículo' },
-      { key: 'geo', label: 'Ubicación geográfica (Estado)' },
-      { key: 'fuel', label: 'Tipo de combustible' },
-      { key: 'clase', label: 'Clase / Tipo de vehículo' },
-      { key: 'gps', label: 'Cobertura GPS' },
-      { key: 'verificado', label: 'Verificación de datos' }
-    ];
-
-    const missingRequired = requiredDimensions.filter((d) => !cols || (!cols[d.key] && (d.key !== 'clase' || !cols.modelo)));
-    if (missingRequired.length > 0) {
-      const missingNames = missingRequired.map((d) => d.label).join(', ');
+    const maxRecords = (FleetConfig.LIMITS && FleetConfig.LIMITS.MAX_RECORDS) || 50000;
+    if (rows.length > maxRecords) {
       return {
         isValid: false,
-        reason: `El archivo CSV no contiene todos los datos requeridos para generar el tablero. Columnas faltantes: ${missingNames}. El reporte no se generará hasta que se incluya un conjunto completo de datos.`
+        reason: `El archivo contiene ${rows.length.toLocaleString('es-MX')} registros, superando el límite máximo de ${maxRecords.toLocaleString('es-MX')} registros soportados.`
+      };
+    }
+
+    if (!cols || !cols.status) {
+      return {
+        isValid: false,
+        reason: 'El archivo CSV no contiene la columna requerida de estatus del vehículo ("Estatus", "Estado", "Condición", etc.).'
       };
     }
 

@@ -35,12 +35,16 @@ window.FleetConfig = {
     { key: 'sin_clasificar',    label: 'Sin clasificar',    color: '#9CA3AF', soft: '#F3F4F6', text: '#4B5563' }
   ],
 
-  STATUS_COLUMN_CANDIDATES: [
-    'situacion (estatus)', 'estatus', 'estado_vehiculo', 'situacion', 'condicion', 'estado'
-  ],
+  LIMITS: {
+    MAX_FILE_SIZE_BYTES: 30 * 1024 * 1024,
+    MAX_FILE_SIZE_MB: 30,
+    MAX_RECORDS: 50000,
+    ALLOWED_EXTENSIONS: ['.csv', '.xlsx', '.xls']
+  },
+
+  ESTATUS_COLUMN_CANDIDATES: ['situacion (estatus)', 'estatus', 'estado_vehiculo', 'situacion', 'condicion'],
   GEO_COLUMN_CANDIDATES: ['estado', 'estado_geografico', 'ubicacion'],
   FUEL_COLUMN_CANDIDATES: ['tipo combustible', 'combustible'],
-  GERENCIA_COLUMN_CANDIDATES: ['gerencia', 'unidad usuaria'],
   MODEL_COLUMN_CANDIDATES: ['modelo', 'tipo_vehiculo', 'tipo_unidad', 'marca_modelo', 'vehiculo', 'modelo_vehiculo', 'tipo'],
   CLASS_COLUMN_CANDIDATES: ['clase', 'clase_vehiculo', 'clase (tipo)', 'categoria', 'clase_unidad', 'tipo_vehiculo', 'modelo'],
   GPS_COLUMN_CANDIDATES: ['gps'],
@@ -71,5 +75,15 @@ window.FleetConfig = {
     const norm = this.normalize(raw);
     if (!norm) return null;
     return this.STATUS_MAP[norm] ?? 'sin_clasificar';
+  },
+
+  escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 };

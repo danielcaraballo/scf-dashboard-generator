@@ -59,8 +59,7 @@ window.FleetParser = {
   detectColumns(headers, rows = []) {
     const used = [];
 
-    const explicitStatusCandidates = ['situacion (estatus)', 'estatus', 'estado_vehiculo', 'situacion', 'condicion'];
-    let statusCol = this.detectColumn(headers, explicitStatusCandidates, used);
+    let statusCol = this.detectColumn(headers, FleetConfig.ESTATUS_COLUMN_CANDIDATES, used);
 
     let geoCol = null;
     if (statusCol) {
@@ -93,9 +92,6 @@ window.FleetParser = {
     const fuelCol = this.detectColumn(headers, FleetConfig.FUEL_COLUMN_CANDIDATES, used);
     if (fuelCol) used.push(fuelCol);
 
-    const gerenciaCol = this.detectColumn(headers, FleetConfig.GERENCIA_COLUMN_CANDIDATES, used);
-    if (gerenciaCol) used.push(gerenciaCol);
-
     const modeloCol = this.detectColumn(headers, FleetConfig.MODEL_COLUMN_CANDIDATES, used);
     if (modeloCol) used.push(modeloCol);
 
@@ -112,7 +108,6 @@ window.FleetParser = {
       status: statusCol,
       geo: geoCol,
       fuel: fuelCol,
-      gerencia: gerenciaCol,
       modelo: modeloCol,
       clase: claseCol,
       gps: gpsCol,

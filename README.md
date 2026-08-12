@@ -10,11 +10,11 @@ Generador de tableros de control y analítica visual de flota vehicular **100% C
 
 - **🔒 Privacidad y Procesamiento Client-Side:** Carga y analiza datos localmente en formato CSV o Excel (`.xlsx`, `.xls`) usando PapaParse en Web Workers y SheetJS. Ninguna información sensible sale de tu dispositivo.
 - **⚡ Alto Rendimiento con Grandes Volúmenes:** Capaz de procesar miles de filas en milisegundos sin congelar la interfaz de usuario.
-- **🧠 Detección Inteligente de Columnas:** Mapeo automático de campos (estatus, ubicación/estado, gerencia, marca, modelo, clase, GPS, combustible, etc.) mediante coincidencia exacta y heurística de substrings.
+- **🧠 Detección Inteligente de Columnas:** Mapeo automático de campos (estatus, ubicación/estado, marca, modelo, clase, GPS, combustible, etc.) mediante coincidencia exacta y heurística de substrings.
 - **📊 Semántica Operativa y Colores:** Clasificación estandarizada en 8 categorías operativas (Operativo, En Reparación, Inoperativo, Por Desincorporar, Desincorporado, Por Ubicar, Hurtado, Otros Entes) con semáforos visuales (Verde ≥80%, Amarillo ≥50%, Rojo <50%).
 - **🗺️ Filtros por Estado / Región:** Filtrado dinámico por estado geográfico con selección interactiva y autodetección cuando la flota pertenece a una sola entidad.
 - **📈 Visualización Interactiva:** Gráficos de dona y barras horizontales construidos con Chart.js.
-- **📋 Métricas Ejecutivas e Indicadores de Completitud:** Tarjetas KPI de resumen, rendimiento por región/estado, gerencia y nivel de completitud de datos (Identificación Técnica, Ubicación y Estatus).
+- **📋 Métricas Ejecutivas e Indicadores de Completitud:** Tarjetas KPI de resumen, rendimiento por región/estado y nivel de completitud de datos (Identificación Técnica, Ubicación y Estatus).
 - **📄 Exportación a PDF y PNG:** Generación de reportes PDF A4 Landscape multipágina por secciones con encabezado corporativo, numeración dinámica (`Página X de Y`) y fuentes incrustadas mediante `html2canvas-pro` y `jsPDF`.
 
 ---

@@ -1,6 +1,16 @@
 window.FleetUI = (function () {
   const fmt = new Intl.NumberFormat('es-MX');
 
+  const escapeHtml = (FleetConfig && FleetConfig.escapeHtml) || function (str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
   const byId = (id) => document.getElementById(id);
 
   const ICONS = {
@@ -75,11 +85,8 @@ window.FleetUI = (function () {
 
     filterBox.classList.remove('hidden');
 
-    const expectedOptionCount = states.length + 1;
-    if (select.options.length !== expectedOptionCount) {
-      select.innerHTML = `<option value="">Todos los Estados</option>` +
-        states.map((s) => `<option value="${s.norm}">${s.label}</option>`).join('');
-    }
+    select.innerHTML = `<option value="">Todos los Estados</option>` +
+      states.map((s) => `<option value="${escapeHtml(s.norm)}">${escapeHtml(s.label)}</option>`).join('');
 
     select.value = activeStateFilter || '';
 
@@ -97,7 +104,6 @@ window.FleetUI = (function () {
   }
 
   function renderHero(analysis, activeStateFilter) {
-    const tone = pctTone(analysis.rate);
     const operativos = statFor(analysis.stats, 'operativo');
 
     byId('heroTotal').textContent = fmt.format(analysis.total);
@@ -129,7 +135,7 @@ window.FleetUI = (function () {
       .map((s) => `
         <div class="flex items-center gap-2 sm:gap-3">
           <div class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${s.color}"></div>
-          <span class="text-xs sm:text-sm text-slate-700 flex-1 min-w-0 truncate">${s.label}</span>
+          <span class="text-xs sm:text-sm text-slate-700 flex-1 min-w-0 truncate">${escapeHtml(s.label)}</span>
           <div class="flex items-center gap-2 flex-1 max-w-[120px] sm:max-w-[200px]">
             <div class="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-200">
               <div class="h-full rounded-full transition-all duration-300" style="width:${s.pct}%; background:${s.color}"></div>
@@ -142,14 +148,16 @@ window.FleetUI = (function () {
   }
 
   function kpiCardHtml({ title, value, sub, icon, chipClass }) {
+    const safeTitle = escapeHtml(title);
+    const safeValue = escapeHtml(value);
     return `
       <div class="w-full sm:w-1/2 lg:w-1/3 p-2">
       <div class="rounded-md border border-slate-200 bg-white transition-all duration-150 hover:shadow-xs h-full">
         <div class="p-3 flex items-center justify-between gap-3">
           <div class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">${title}</span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">${safeTitle}</span>
             <div class="flex items-baseline gap-1.5 min-w-0">
-              <span class="text-lg sm:text-xl font-bold leading-none text-slate-900 truncate">${value}</span>
+              <span class="text-lg sm:text-xl font-bold leading-none text-slate-900 truncate">${safeValue}</span>
               ${sub}
             </div>
           </div>
@@ -264,8 +272,8 @@ window.FleetUI = (function () {
       .map((item) => `
         <div class="flex items-center justify-between gap-3">
           <span class="flex items-center gap-1.5 text-sm text-slate-600 truncate">
-            <span class="w-2.5 h-2.5 rounded-full inline-block shrink-0" style="background:${item.color}"></span>
-            ${item.label}
+            <span class="w-2.5 h-2.5 rounded-full inline-block shrink-0" style="background:${escapeHtml(item.color)}"></span>
+            ${escapeHtml(item.label)}
           </span>
           <span class="text-sm font-semibold text-slate-900">${fmt.format(item.count)}</span>
         </div>`)
@@ -282,7 +290,7 @@ window.FleetUI = (function () {
     const messages = [];
 
     if (coverage.missingColumns && coverage.missingColumns.length > 0) {
-      const names = coverage.missingColumns.map((c) => c.label).join(', ');
+      const names = coverage.missingColumns.map((c) => escapeHtml(c.label)).join(', ');
       messages.push(`<div class="flex items-start gap-2">
         <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 zm-9-3.75h.008v.008H12v-.008z" /></svg>
         <span><strong>Análisis parcial (${coverage.detectedCount}/6 dimensiones):</strong> No se detectaron datos para <em>${names}</em>. El tablero se adaptó para mostrar los indicadores disponibles.</span>
@@ -345,13 +353,17 @@ window.FleetUI = (function () {
     ];
 
     byId('completenessContainer').innerHTML = cards
-      .map(([label, value]) => `
-        <div class="w-full sm:w-1/3 p-2">
-        <div class="rounded-md border border-slate-200 bg-white p-3 flex flex-col gap-1 min-w-0 h-full">
-          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 truncate" title="${label}">${label}</span>
-          <span class="text-sm sm:text-base font-bold text-slate-900 truncate" title="${value}">${value}</span>
-        </div>
-        </div>`)
+      .map(([label, value]) => {
+        const safeLabel = escapeHtml(label);
+        const safeValue = escapeHtml(value);
+        return `
+          <div class="w-full sm:w-1/3 p-2">
+          <div class="rounded-md border border-slate-200 bg-white p-3 flex flex-col gap-1 min-w-0 h-full">
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 truncate" title="${safeLabel}">${safeLabel}</span>
+            <span class="text-sm sm:text-base font-bold text-slate-900 truncate" title="${safeValue}">${safeValue}</span>
+          </div>
+          </div>`;
+      })
       .join('');
   }
 
@@ -400,6 +412,15 @@ window.FleetUI = (function () {
       actions.classList.add('hidden');
       actions.classList.remove('flex');
     }
+    const reportArea = byId('reportArea');
+    if (reportArea) reportArea.classList.add('hidden');
+    const emptyState = byId('emptyState');
+    if (emptyState) emptyState.classList.remove('hidden');
+    const qualityBox = byId('qualityBannerBox');
+    if (qualityBox) qualityBox.classList.add('hidden');
+    const filterBox = byId('filterBarBox');
+    if (filterBox) filterBox.classList.add('hidden');
+    clearError();
   }
 
   return { render, showError, clearError, setStatus, clearStatus, reset };

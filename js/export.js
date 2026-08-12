@@ -1,47 +1,46 @@
-const PDF_FONT_SOURCES = [
-  {
-    url: 'https://raw.githubusercontent.com/google/fonts/main/ofl/poppins/Poppins-Regular.ttf',
-    fileName: 'Poppins-Regular.ttf',
-    fontName: 'Poppins',
-    style: 'normal'
-  },
-  {
-    url: 'https://raw.githubusercontent.com/google/fonts/main/ofl/poppins/Poppins-Bold.ttf',
-    fileName: 'Poppins-Bold.ttf',
-    fontName: 'Poppins',
-    style: 'bold'
-  },
-  {
-    url: 'https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/ttf/JetBrainsMono-Regular.ttf',
-    fileName: 'JetBrainsMono-Regular.ttf',
-    fontName: 'JetBrainsMono',
-    style: 'normal'
-  },
-  {
-    url: 'https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/ttf/JetBrainsMono-SemiBold.ttf',
-    fileName: 'JetBrainsMono-SemiBold.ttf',
-    fontName: 'JetBrainsMono',
-    style: 'bold'
+window.FleetExport = (function () {
+  const PDF_FONT_SOURCES = [
+    {
+      url: 'https://raw.githubusercontent.com/google/fonts/main/ofl/poppins/Poppins-Regular.ttf',
+      fileName: 'Poppins-Regular.ttf',
+      fontName: 'Poppins',
+      style: 'normal'
+    },
+    {
+      url: 'https://raw.githubusercontent.com/google/fonts/main/ofl/poppins/Poppins-Bold.ttf',
+      fileName: 'Poppins-Bold.ttf',
+      fontName: 'Poppins',
+      style: 'bold'
+    },
+    {
+      url: 'https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/ttf/JetBrainsMono-Regular.ttf',
+      fileName: 'JetBrainsMono-Regular.ttf',
+      fontName: 'JetBrainsMono',
+      style: 'normal'
+    },
+    {
+      url: 'https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/ttf/JetBrainsMono-SemiBold.ttf',
+      fileName: 'JetBrainsMono-SemiBold.ttf',
+      fontName: 'JetBrainsMono',
+      style: 'bold'
+    }
+  ];
+
+  const pdfFontBase64Cache = new Map();
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
-];
-
-const pdfFontBase64Cache = new Map();
-
-function blobToBase64(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-window.FleetExport = {
-  dateStamp() {
+  function dateStamp() {
     return new Date().toISOString().slice(0, 10);
-  },
+  }
 
-  getMetadata() {
+  function getMetadata() {
     const fileNameEl = document.getElementById('fileName');
     const totalEl = document.getElementById('heroTotal');
     const fileName = fileNameEl ? fileNameEl.textContent.trim() : 'flota.csv';
@@ -59,9 +58,9 @@ window.FleetExport = {
       year: 'numeric'
     });
     return { fileName, totalRecords, dateStr, filterSubtitle };
-  },
+  }
 
-  async ensurePdfFonts(pdf) {
+  async function ensurePdfFonts(pdf) {
     for (const f of PDF_FONT_SOURCES) {
       let base64 = pdfFontBase64Cache.get(f.url);
       if (!base64) {
@@ -74,9 +73,9 @@ window.FleetExport = {
       pdf.addFont(f.fileName, f.fontName, f.style);
     }
     return true;
-  },
+  }
 
-  copyCanvases(source, target) {
+  function copyCanvases(source, target) {
     const sourceCanvases = source.querySelectorAll('canvas');
     const targetCanvases = target.querySelectorAll('canvas');
 
@@ -91,9 +90,9 @@ window.FleetExport = {
         }
       }
     });
-  },
+  }
 
-  async captureElement(element) {
+  async function captureElement(element) {
     if (!window.html2canvas) {
       await new Promise((resolve) => {
         const check = setInterval(() => {
@@ -134,9 +133,9 @@ window.FleetExport = {
         }
       }
     });
-  },
+  }
 
-  async exportPNG() {
+  async function exportPNG() {
     const btn = document.getElementById('imageBtn');
     const originalLabel = btn.innerHTML;
 
@@ -146,8 +145,11 @@ window.FleetExport = {
     let wrapper = null;
     try {
       const reportArea = document.getElementById('reportArea');
-      const { fileName, totalRecords, dateStr, filterSubtitle } = this.getMetadata();
-      const filterInfo = filterSubtitle ? ` &middot; <strong style="color: #0EA5E9; font-weight: 600;">${filterSubtitle}</strong>` : '';
+      const { fileName, totalRecords, dateStr, filterSubtitle } = getMetadata();
+      const escapeHtml = (window.FleetConfig && window.FleetConfig.escapeHtml) || ((s) => String(s ?? ''));
+      const safeFileName = escapeHtml(fileName);
+      const safeFilterSub = escapeHtml(filterSubtitle);
+      const filterInfo = safeFilterSub ? ` &middot; <strong style="color: #0EA5E9; font-weight: 600;">${safeFilterSub}</strong>` : '';
 
       wrapper = document.createElement('div');
       wrapper.id = 'pngExportWrapper';
@@ -172,7 +174,7 @@ window.FleetExport = {
           <div>
             <h1 style="font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700; color: #0F172A; margin: 0; line-height: 1.2;">Tablero de Control de Flota</h1>
             <p style="font-size: 13px; color: #64748B; margin: 4px 0 0 0;">
-              Archivo: <strong style="color: #334155; font-weight: 600;">${fileName}</strong> &middot; Registros procesados: <strong style="color: #334155; font-weight: 600;">${totalRecords}</strong>${filterInfo}
+              Archivo: <strong style="color: #334155; font-weight: 600;">${safeFileName}</strong> &middot; Registros procesados: <strong style="color: #334155; font-weight: 600;">${totalRecords}</strong>${filterInfo}
             </p>
           </div>
           <div style="text-align: right;">
@@ -188,13 +190,13 @@ window.FleetExport = {
       bodyContainer.appendChild(clonedContent);
 
       document.body.appendChild(wrapper);
-      this.copyCanvases(reportArea, wrapper);
+      copyCanvases(reportArea, wrapper);
 
       await new Promise((r) => setTimeout(r, 150));
 
-      const canvas = await this.captureElement(wrapper);
+      const canvas = await captureElement(wrapper);
       const link = document.createElement('a');
-      link.download = `Reporte_Flota_${this.dateStamp()}.png`;
+      link.download = `Reporte_Flota_${dateStamp()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (err) {
@@ -207,9 +209,9 @@ window.FleetExport = {
       btn.disabled = false;
       btn.innerHTML = originalLabel;
     }
-  },
+  }
 
-  async exportPDF() {
+  async function exportPDF() {
     const btn = document.getElementById('exportBtn');
     const originalLabel = btn.innerHTML;
 
@@ -219,12 +221,12 @@ window.FleetExport = {
     let sectionWrappers = [];
     try {
       const sections = document.querySelectorAll('#reportArea [data-report-section]');
-      const { fileName, totalRecords, dateStr } = this.getMetadata();
+      const { fileName, totalRecords, dateStr, filterSubtitle } = getMetadata();
 
       const pdf = new jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       let fontsReady = false;
       try {
-        fontsReady = await this.ensurePdfFonts(pdf);
+        fontsReady = await ensurePdfFonts(pdf);
       } catch (err) {
         fontsReady = false;
       }
@@ -255,12 +257,12 @@ window.FleetExport = {
         const cloned = section.cloneNode(true);
         wrap.appendChild(cloned);
         document.body.appendChild(wrap);
-        this.copyCanvases(section, wrap);
+        copyCanvases(section, wrap);
         sectionWrappers.push(wrap);
 
         await new Promise((r) => setTimeout(r, 100));
 
-        const canvas = await this.captureElement(wrap);
+        const canvas = await captureElement(wrap);
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const imgH = (canvas.height * contentW) / canvas.width;
         capturedSections.push({ imgData, imgH });
@@ -276,7 +278,7 @@ window.FleetExport = {
         }
       }
 
-      function drawHeader() {
+      const drawHeader = () => {
         const boxH = 20;
         const cardRadius = 2;
         pdf.setFillColor(255, 255, 255);
@@ -289,7 +291,6 @@ window.FleetExport = {
         pdf.setTextColor(15, 23, 42);
         pdf.text('Tablero de Control de Flota', headerX + 7, marginY + 8);
 
-        const { fileName, totalRecords, dateStr, filterSubtitle } = this.getMetadata();
         setPdfFont('Poppins', 'normal');
         pdf.setFontSize(8.5);
         const metaLabels = ['Archivo: ', ' · Registros: '];
@@ -369,7 +370,7 @@ window.FleetExport = {
         pdf.text(pageStr, pdfW - marginX - pageWidth, pdfH - marginY);
       }
 
-      pdf.save(`Reporte_Flota_${this.dateStamp()}.pdf`);
+      pdf.save(`Reporte_Flota_${dateStamp()}.pdf`);
     } catch (err) {
       console.error('Error al exportar PDF:', err);
       if (window.FleetUI) FleetUI.showError('No se pudo generar el PDF. Inténtalo de nuevo.');
@@ -381,4 +382,14 @@ window.FleetExport = {
       btn.innerHTML = originalLabel;
     }
   }
-};
+
+  return {
+    dateStamp,
+    getMetadata,
+    ensurePdfFonts,
+    copyCanvases,
+    captureElement,
+    exportPNG,
+    exportPDF
+  };
+})();
