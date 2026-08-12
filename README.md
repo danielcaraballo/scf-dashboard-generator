@@ -46,8 +46,9 @@ scf-dashboard-generator/
 │   ├── charts.js            # Inicialización y gestión de gráficos Chart.js
 │   ├── ui.js                # Renderizado de componentes UI y tarjetas KPI
 │   └── export.js            # Motor de generación de reportes PNG y PDF multipágina
-├── sample/
-│   └── flota_muestra.csv    # CSV de muestra para pruebas
+├── template/
+│   ├── flota_template.csv    # CSV de referencia del formato esperado
+│   └── flota_template.xlsx   # Plantilla Excel rellenable
 ├── favicon.svg              # Icono del proyecto
 ├── index.html               # Interfaz principal (Bento UI layout + Filtros)
 └── README.md                # Documentación del proyecto
@@ -73,7 +74,7 @@ No requiere proceso de compilación ni instalación de dependencias (`node_modul
    ```
 
 3. **Abrir en el navegador:**
-   Navega a `http://localhost:8080` y carga el archivo de muestra `sample/flota_muestra.csv` o tu propio archivo CSV/Excel.
+   Navega a `http://localhost:8080` y carga el archivo de referencia `template/flota_template.csv` (o la plantilla `template/flota_template.xlsx`) o tu propio archivo CSV/Excel.
 
 ---
 

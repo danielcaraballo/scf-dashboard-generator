@@ -8,6 +8,9 @@ PLAN.md
 AGENTS.md
 agents.md
 
-# Datos sensibles: los CSV reales de la flota nunca se suben.
+# Datos sensibles: los CSV/Excel reales de la flota nunca se suben.
 *.csv
-!sample/flota_muestra.csv
+*.xls
+*.xlsx
+!template/flota_template.csv
+!template/flota_template.xlsx
