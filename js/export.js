@@ -109,6 +109,9 @@ window.FleetExport = (function () {
       scrollX: 0,
       scrollY: 0,
       onclone: (doc) => {
+        if (doc.documentElement) {
+          doc.documentElement.classList.remove('dark');
+        }
         const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
         const seen = new Set();
         let node = walker.nextNode();
@@ -141,6 +144,8 @@ window.FleetExport = (function () {
     let wrapper = null;
     try {
       const reportArea = document.getElementById('reportArea');
+      const lr = window.FleetUI && window.FleetUI.getLastResult ? window.FleetUI.getLastResult() : null;
+      const analysis = lr ? lr.analysis : null;
       const { dateStr, filterSubtitle } = getMetadata();
       const escapeHtml = (window.FleetConfig && window.FleetConfig.escapeHtml) || ((s) => String(s ?? ''));
       const safeFilterSub = escapeHtml(filterSubtitle);
@@ -183,7 +188,9 @@ window.FleetExport = (function () {
       bodyContainer.appendChild(clonedContent);
 
       document.body.appendChild(wrapper);
-      copyCanvases(reportArea, wrapper);
+      if (window.FleetCharts && window.FleetCharts.renderLightChartsIn) {
+        window.FleetCharts.renderLightChartsIn(wrapper, analysis);
+      }
 
       await new Promise((r) => setTimeout(r, 150));
 
@@ -198,6 +205,9 @@ window.FleetExport = (function () {
     } finally {
       if (wrapper && wrapper.parentNode) {
         wrapper.parentNode.removeChild(wrapper);
+      }
+      if (window.FleetCharts && window.FleetCharts.destroyExportCharts) {
+        window.FleetCharts.destroyExportCharts();
       }
       btn.disabled = false;
       btn.innerHTML = originalLabel;
@@ -216,6 +226,8 @@ window.FleetExport = (function () {
       const sections = Array.from(
         document.querySelectorAll('#reportArea [data-report-section]')
       ).filter((el) => !el.hasAttribute('data-report-exclude'));
+      const lr = window.FleetUI && window.FleetUI.getLastResult ? window.FleetUI.getLastResult() : null;
+      const analysis = lr ? lr.analysis : null;
       const { dateStr, filterSubtitle } = getMetadata();
 
       const pdf = new jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
@@ -254,7 +266,9 @@ window.FleetExport = (function () {
         cloned.querySelectorAll('[data-report-exclude]').forEach((el) => el.remove());
         wrap.appendChild(cloned);
         document.body.appendChild(wrap);
-        copyCanvases(section, wrap);
+        if (window.FleetCharts && window.FleetCharts.renderLightChartsIn) {
+          window.FleetCharts.renderLightChartsIn(wrap, analysis);
+        }
         sectionWrappers.push(wrap);
 
         await new Promise((r) => setTimeout(r, 100));
@@ -349,6 +363,9 @@ window.FleetExport = (function () {
       sectionWrappers.forEach((w) => {
         if (w && w.parentNode) w.parentNode.removeChild(w);
       });
+      if (window.FleetCharts && window.FleetCharts.destroyExportCharts) {
+        window.FleetCharts.destroyExportCharts();
+      }
       btn.disabled = false;
       btn.innerHTML = originalLabel;
     }

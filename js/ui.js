@@ -12,6 +12,7 @@ window.FleetUI = (function () {
   };
 
   const byId = (id) => document.getElementById(id);
+  let lastResult = null;
 
   const ICONS = {
     arrowUp: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 19.5v-15m0 0l-6.75 6.75M12 4.5l6.75 6.75" />',
@@ -44,9 +45,9 @@ window.FleetUI = (function () {
   }
 
   function pctTone(pct) {
-    if (pct >= 80) return { color: '#10B981', soft: 'bg-emerald-50', bar: 'bg-emerald-500', text: 'text-emerald-600' };
-    if (pct >= 50) return { color: '#F59E0B', soft: 'bg-amber-50', bar: 'bg-amber-500', text: 'text-amber-600' };
-    return { color: '#EF4444', soft: 'bg-red-50', bar: 'bg-red-500', text: 'text-red-600' };
+    if (pct >= 80) return { color: '#10B981', soft: 'bg-emerald-50', softDark: 'dark:bg-emerald-500/15', bar: 'bg-emerald-500', text: 'text-emerald-600', textDark: 'dark:text-emerald-400' };
+    if (pct >= 50) return { color: '#F59E0B', soft: 'bg-amber-50', softDark: 'dark:bg-amber-500/15', bar: 'bg-amber-500', text: 'text-amber-600', textDark: 'dark:text-amber-400' };
+    return { color: '#EF4444', soft: 'bg-red-50', softDark: 'dark:bg-red-500/15', bar: 'bg-red-500', text: 'text-red-600', textDark: 'dark:text-red-400' };
   }
 
   function extractStates(rows, geoCol) {
@@ -113,7 +114,7 @@ window.FleetUI = (function () {
     }
     byId('heroPct').textContent = `${analysis.rate.toFixed(1)}%`;
     byId('heroPct').style.color = '#0EA5E9';
-    byId('heroBarBg').className = 'h-2 rounded-full overflow-hidden bg-sky-50';
+    byId('heroBarBg').className = 'h-2 rounded-full overflow-hidden bg-sky-50 dark:bg-sky-500/15';
     byId('heroBar').style.width = `${Math.min(analysis.rate, 100)}%`;
     byId('heroBar').style.backgroundColor = '#0EA5E9';
     byId('heroOperativos').textContent = fmt.format(operativos ? operativos.count : 0);
@@ -123,7 +124,7 @@ window.FleetUI = (function () {
     const afTone = pctTone(af.rate);
     byId('heroActivePct').textContent = `${af.rate.toFixed(1)}%`;
     byId('heroActivePct').style.color = afTone.color;
-    byId('heroActiveBarBg').className = `h-2 rounded-full overflow-hidden ${afTone.soft}`;
+    byId('heroActiveBarBg').className = `h-2 rounded-full overflow-hidden ${afTone.soft} ${afTone.softDark}`;
     byId('heroActiveBar').style.width = `${Math.min(af.rate, 100)}%`;
     byId('heroActiveBar').style.backgroundColor = afTone.color;
   }
@@ -135,14 +136,14 @@ window.FleetUI = (function () {
       .map((s) => `
         <div class="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
           <div class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${s.color}"></div>
-          <span class="text-slate-700 flex-1 min-w-0 truncate font-medium" title="${escapeHtml(s.label)}">${escapeHtml(s.label)}</span>
+          <span class="text-slate-700 flex-1 min-w-0 truncate font-medium dark:text-slate-200" title="${escapeHtml(s.label)}">${escapeHtml(s.label)}</span>
           <div class="flex items-center gap-2 flex-1 min-w-[36px] sm:min-w-[60px] max-w-[100px] sm:max-w-[200px]">
-            <div class="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-200">
+            <div class="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
               <div class="h-full rounded-full transition-all duration-300" style="width:${s.pct}%; background:${s.color}"></div>
             </div>
           </div>
-          <span class="font-semibold text-slate-500 shrink-0 w-11 sm:w-14 text-right">${s.pct.toFixed(1)}%</span>
-          <span class="font-bold text-slate-800 shrink-0 w-10 sm:w-14 text-right min-w-[36px]">${fmt.format(s.count)}</span>
+          <span class="font-semibold text-slate-500 shrink-0 w-11 sm:w-14 text-right dark:text-slate-400">${s.pct.toFixed(1)}%</span>
+          <span class="font-bold text-slate-800 shrink-0 w-10 sm:w-14 text-right min-w-[36px] dark:text-slate-100">${fmt.format(s.count)}</span>
         </div>`)
       .join('');
   }
@@ -152,12 +153,12 @@ window.FleetUI = (function () {
     const safeValue = escapeHtml(value);
     return `
       <div class="w-full sm:w-1/2 lg:w-1/3 p-2">
-      <div class="rounded-md border border-slate-200 bg-white transition-all duration-150 hover:shadow-xs h-full">
+      <div class="rounded-md border border-slate-200 bg-white transition-all duration-150 hover:shadow-xs h-full dark:border-slate-700 dark:bg-slate-800">
         <div class="p-3 flex items-center justify-between gap-3">
           <div class="flex flex-col gap-1 min-w-0 flex-1">
-            <span class="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate" title="${safeTitle}">${safeTitle}</span>
+            <span class="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate dark:text-slate-400" title="${safeTitle}">${safeTitle}</span>
             <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 min-w-0">
-              <span class="text-base sm:text-xl font-bold leading-tight text-slate-900 break-words" title="${safeValue}">${safeValue}</span>
+              <span class="text-base sm:text-xl font-bold leading-tight text-slate-900 break-words dark:text-slate-100" title="${safeValue}">${safeValue}</span>
               ${sub}
             </div>
           </div>
@@ -179,18 +180,18 @@ window.FleetUI = (function () {
         cards.push(kpiCardHtml({
           title: 'Mayor operatividad',
           value: mejor.label,
-          sub: `<span class="inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap text-emerald-600">${iconSvg('arrowUp')}<span>${mejor.pct.toFixed(0)}%</span></span>`,
+          sub: `<span class="inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap text-emerald-600 dark:text-emerald-400">${iconSvg('arrowUp')}<span>${mejor.pct.toFixed(0)}%</span></span>`,
           icon: iconSvg('arrowUp'),
-          chipClass: 'bg-emerald-50 text-emerald-600'
+          chipClass: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
         }));
       }
       if (peor.pct < 100) {
         cards.push(kpiCardHtml({
           title: 'Menor operatividad',
           value: peor.label,
-          sub: `<span class="inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap text-red-600">${iconSvg('arrowDown')}<span>${peor.pct.toFixed(0)}%</span></span>`,
+          sub: `<span class="inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap text-red-600 dark:text-red-400">${iconSvg('arrowDown')}<span>${peor.pct.toFixed(0)}%</span></span>`,
           icon: iconSvg('arrowDown'),
-          chipClass: 'bg-red-50 text-red-600'
+          chipClass: 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
         }));
       }
     } else if (activeStateFilter) {
@@ -199,9 +200,9 @@ window.FleetUI = (function () {
         cards.push(kpiCardHtml({
           title: 'Combustible principal',
           value: topFuel.label,
-          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium">${fmt.format(topFuel.count)} de ${fmt.format(analysis.total)} vhs · ${topFuel.pct.toFixed(1)}%</span>`,
+          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium dark:text-slate-400">${fmt.format(topFuel.count)} de ${fmt.format(analysis.total)} vhs · ${topFuel.pct.toFixed(1)}%</span>`,
           icon: iconSvg('fire'),
-          chipClass: 'bg-amber-50 text-amber-600'
+          chipClass: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400'
         }));
       }
 
@@ -210,18 +211,18 @@ window.FleetUI = (function () {
         cards.push(kpiCardHtml({
           title: 'Clase principal',
           value: topClase.label,
-          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium">${fmt.format(topClase.count)} de ${fmt.format(analysis.total)} vhs · ${topClase.pct.toFixed(1)}%</span>`,
+          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium dark:text-slate-400">${fmt.format(topClase.count)} de ${fmt.format(analysis.total)} vhs · ${topClase.pct.toFixed(1)}%</span>`,
           icon: iconSvg('truck'),
-          chipClass: 'bg-indigo-50 text-indigo-600'
+          chipClass: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400'
         }));
       } else if (analysis.verificado) {
         const v = analysis.verificado;
         cards.push(kpiCardHtml({
           title: 'Datos verificados',
           value: fmt.format(v.yes),
-          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium">de ${fmt.format(v.yes + v.no)} vehículos · ${v.pct.toFixed(1)}%</span>`,
+          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium dark:text-slate-400">de ${fmt.format(v.yes + v.no)} vehículos · ${v.pct.toFixed(1)}%</span>`,
           icon: iconSvg('checkCircle'),
-          chipClass: 'bg-emerald-50 text-emerald-600'
+          chipClass: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
         }));
       }
     }
@@ -231,9 +232,9 @@ window.FleetUI = (function () {
       cards.push(kpiCardHtml({
         title: 'Cobertura GPS',
         value: fmt.format(gps.yes),
-        sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium">de ${fmt.format(gps.yes + gps.no)} vehículos · ${gps.pct.toFixed(1)}%</span>`,
+        sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium dark:text-slate-400">de ${fmt.format(gps.yes + gps.no)} vehículos · ${gps.pct.toFixed(1)}%</span>`,
         icon: iconSvg('mapPin'),
-        chipClass: 'bg-sky-50 text-sky-600'
+        chipClass: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400'
       }));
     }
 
@@ -271,11 +272,11 @@ window.FleetUI = (function () {
     return items
       .map((item) => `
         <div class="flex items-center justify-between gap-3 text-xs sm:text-sm">
-          <span class="flex items-center gap-1.5 text-slate-600 min-w-0 truncate">
+          <span class="flex items-center gap-1.5 text-slate-600 min-w-0 truncate dark:text-slate-300">
             <span class="w-2.5 h-2.5 rounded-full inline-block shrink-0" style="background:${escapeHtml(item.color)}"></span>
             <span class="truncate" title="${escapeHtml(item.label)}">${escapeHtml(item.label)}</span>
           </span>
-          <span class="font-semibold text-slate-900 shrink-0 ml-2">${fmt.format(item.count)}</span>
+          <span class="font-semibold text-slate-900 shrink-0 ml-2 dark:text-slate-100">${fmt.format(item.count)}</span>
         </div>`)
       .join('');
   }
@@ -292,14 +293,14 @@ window.FleetUI = (function () {
     if (coverage.missingColumns && coverage.missingColumns.length > 0) {
       const names = coverage.missingColumns.map((c) => escapeHtml(c.label)).join(', ');
       messages.push(`<div class="flex items-start gap-2">
-        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 zm-9-3.75h.008v.008H12v-.008z" /></svg>
+        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 zm-9-3.75h.008v.008H12v-.008z" /></svg>
         <span><strong>Análisis parcial (${coverage.detectedCount}/6 dimensiones):</strong> No se detectaron datos para <em>${names}</em>. El tablero se adaptó para mostrar los indicadores disponibles.</span>
       </div>`);
     }
 
     if (coverage.unclassifiedPct > 5) {
-      messages.push(`<div class="flex items-start gap-2 ${messages.length ? 'mt-2 pt-2 border-t border-amber-200' : ''}">
-        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.008v.008H12v-.008z" /></svg>
+      messages.push(`<div class="flex items-start gap-2 ${messages.length ? 'mt-2 pt-2 border-t border-amber-200 dark:border-amber-900/50' : ''}">
+        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.008v.008H12v-.008z" /></svg>
         <span><strong>Datos sin clasificar:</strong> ${fmt.format(coverage.unclassifiedCount)} registros (${coverage.unclassifiedPct.toFixed(1)}%) contienen un estatus no reconocido por el sistema.</span>
       </div>`);
     }
@@ -358,9 +359,9 @@ window.FleetUI = (function () {
         const safeValue = escapeHtml(value);
         return `
           <div class="w-full sm:w-1/3 p-2">
-          <div class="rounded-md border border-slate-200 bg-white p-3 sm:p-4 flex flex-col gap-1 min-w-0 h-full">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 truncate" title="${safeLabel}">${safeLabel}</span>
-            <span class="text-sm sm:text-base font-bold text-slate-900 truncate" title="${safeValue}">${safeValue}</span>
+          <div class="rounded-md border border-slate-200 bg-white p-3 sm:p-4 flex flex-col gap-1 min-w-0 h-full dark:border-slate-700 dark:bg-slate-800">
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 truncate dark:text-slate-400" title="${safeLabel}">${safeLabel}</span>
+            <span class="text-sm sm:text-base font-bold text-slate-900 truncate dark:text-slate-100" title="${safeValue}">${safeValue}</span>
           </div>
           </div>`;
       })
@@ -368,6 +369,7 @@ window.FleetUI = (function () {
   }
 
   function render(result) {
+    lastResult = result;
     const { analysis, file, activeStateFilter, rawRows, cols } = result;
 
     renderStateFilter(rawRows, cols, activeStateFilter);
@@ -423,5 +425,14 @@ window.FleetUI = (function () {
     clearError();
   }
 
-  return { render, showError, clearError, setStatus, clearStatus, reset };
+  function refresh() {
+    if (!lastResult) return;
+    render(lastResult);
+  }
+
+  function getLastResult() {
+    return lastResult;
+  }
+
+  return { render, refresh, getLastResult, showError, clearError, setStatus, clearStatus, reset };
 })();

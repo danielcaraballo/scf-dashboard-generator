@@ -2,10 +2,30 @@ window.FleetCharts = (function () {
   const charts = {};
   const PALETTE = ['#0EA5E9', '#10B981', '#EAB308', '#F97316', '#8B5CF6', '#EF4444', '#06B6D4', '#64748B', '#84CC16', '#A855F7', '#14B8A6', '#EC4899'];
 
-  function destroy(id) {
-    if (charts[id]) {
-      charts[id].destroy();
-      delete charts[id];
+  function isDark() {
+    return document.documentElement.classList.contains('dark');
+  }
+
+  function themeColors(theme) {
+    const dark = theme === 'dark' ? true : theme === 'light' ? false : isDark();
+    return dark
+      ? { donutBorder: '#1E293B', countText: '#CBD5E1', hbarTick: '#94A3B8', vbarTick: '#94A3B8' }
+      : { donutBorder: '#FFFFFF', countText: '#334155', hbarTick: '#475569', vbarTick: '#64748B' };
+  }
+
+  function canvasOf(idOrEl) {
+    return typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+  }
+
+  function chartKey(idOrEl) {
+    if (typeof idOrEl === 'string') return idOrEl;
+    return '__export:' + (idOrEl.id || '');
+  }
+
+  function destroy(key) {
+    if (charts[key]) {
+      charts[key].destroy();
+      delete charts[key];
     }
   }
 
@@ -18,19 +38,22 @@ window.FleetCharts = (function () {
     return `${item.label}: ${item.count.toLocaleString('es-MX')} (${pct}%)`;
   }
 
-  function renderDonut(id, items, total) {
-    destroy(id);
-    const ctx = document.getElementById(id);
+  function renderDonut(idOrEl, items, total, opts) {
+    opts = opts || {};
+    const ctx = canvasOf(idOrEl);
     if (!ctx) return;
+    const key = chartKey(idOrEl);
+    destroy(key);
+    const colors = themeColors(opts.theme);
 
-    charts[id] = new Chart(ctx, {
+    charts[key] = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: items.map((i) => i.label),
         datasets: [{
           data: items.map((i) => i.count),
           backgroundColor: palette(items.length),
-          borderColor: '#ffffff',
+          borderColor: colors.donutBorder,
           borderWidth: 2,
           hoverOffset: 8
         }]
@@ -47,7 +70,7 @@ window.FleetCharts = (function () {
     });
   }
 
-  function countRightPlugin(items) {
+  function countRightPlugin(items, theme) {
     return {
       id: 'countRight',
       afterDatasetsDraw(chart) {
@@ -56,7 +79,7 @@ window.FleetCharts = (function () {
         ctx.font = '600 11px Poppins, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = themeColors(theme).countText;
         items.forEach((item, i) => {
           const px = scales.x.getPixelForValue(item.count);
           const py = scales.y.getPixelForValue(i);
@@ -67,12 +90,15 @@ window.FleetCharts = (function () {
     };
   }
 
-  function renderHBar(id, items, color) {
-    destroy(id);
-    const ctx = document.getElementById(id);
+  function renderHBar(idOrEl, items, color, opts) {
+    opts = opts || {};
+    const ctx = canvasOf(idOrEl);
     if (!ctx) return;
+    const key = chartKey(idOrEl);
+    destroy(key);
+    const colors = themeColors(opts.theme);
 
-    charts[id] = new Chart(ctx, {
+    charts[key] = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: items.map((i) => i.label),
@@ -83,7 +109,7 @@ window.FleetCharts = (function () {
           barPercentage: 0.7
         }]
       },
-      plugins: [countRightPlugin(items)],
+      plugins: [countRightPlugin(items, opts.theme)],
       options: {
         indexAxis: 'y',
         responsive: true,
@@ -109,7 +135,7 @@ window.FleetCharts = (function () {
             grid: { display: false },
             ticks: {
               font: { size: 11 },
-              color: '#475569',
+              color: colors.hbarTick,
               callback(val) {
                 const label = this.getLabelForValue(val);
                 return label.length > 20 ? label.slice(0, 18) + '…' : label;
@@ -121,7 +147,7 @@ window.FleetCharts = (function () {
     });
   }
 
-  function pctTopPlugin(items) {
+  function pctTopPlugin(items, theme) {
     return {
       id: 'pctTop',
       afterDatasetsDraw(chart) {
@@ -130,7 +156,7 @@ window.FleetCharts = (function () {
         ctx.font = '600 10px Poppins, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = themeColors(theme).countText;
         items.forEach((item, i) => {
           const px = scales.x.getPixelForValue(i);
           const py = scales.y.getPixelForValue(item.total);
@@ -141,12 +167,15 @@ window.FleetCharts = (function () {
     };
   }
 
-  function renderVBarStacked(id, items) {
-    destroy(id);
-    const ctx = document.getElementById(id);
+  function renderVBarStacked(idOrEl, items, opts) {
+    opts = opts || {};
+    const ctx = canvasOf(idOrEl);
     if (!ctx) return;
+    const key = chartKey(idOrEl);
+    destroy(key);
+    const colors = themeColors(opts.theme);
 
-    charts[id] = new Chart(ctx, {
+    charts[key] = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: items.map((i) => i.shortLabel || i.label),
@@ -155,7 +184,7 @@ window.FleetCharts = (function () {
           { label: 'No operativos', data: items.map((i) => i.inactivos), backgroundColor: '#EF4444', borderRadius: 4 }
         ]
       },
-      plugins: [pctTopPlugin(items)],
+      plugins: [pctTopPlugin(items, opts.theme)],
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -190,7 +219,7 @@ window.FleetCharts = (function () {
               maxRotation: 45,
               minRotation: 0,
               font: { size: 8 },
-              color: '#64748B',
+              color: colors.vbarTick,
               padding: 2,
               callback(val) {
                 const label = this.getLabelForValue(val);
@@ -218,9 +247,45 @@ window.FleetCharts = (function () {
     });
   }
 
+  function renderLightChartsIn(root, analysis) {
+    if (!root || !analysis) return;
+    const q = (sel) => root.querySelector(sel);
+
+    if (analysis.fuel && analysis.fuel.length) {
+      const canvas = q('#fuelCanvas');
+      if (canvas) {
+        const totalFuel = analysis.fuel.reduce((s, i) => s + i.count, 0);
+        renderDonut(canvas, analysis.fuel, totalFuel, { theme: 'light' });
+      }
+    }
+
+    if (analysis.clase && analysis.clase.length) {
+      const canvas = q('#claseCanvas');
+      if (canvas) {
+        renderHBar(canvas, analysis.clase, '#0EA5E9', { theme: 'light' });
+      }
+    }
+
+    if (analysis.porEstado && analysis.porEstado.length) {
+      const section = q('#estadoSectionContainer');
+      if (!section || !section.classList.contains('hidden')) {
+        const canvas = q('#estadoChartCanvas');
+        if (canvas) {
+          renderVBarStacked(canvas, analysis.porEstado, { theme: 'light' });
+        }
+      }
+    }
+  }
+
   function destroyAll() {
     Object.keys(charts).forEach(destroy);
   }
 
-  return { renderDonut, renderHBar, renderVBarStacked, palette, destroyAll };
+  function destroyExportCharts() {
+    Object.keys(charts)
+      .filter((k) => k.indexOf('__export:') === 0)
+      .forEach(destroy);
+  }
+
+  return { renderDonut, renderHBar, renderVBarStacked, palette, destroyAll, renderLightChartsIn, destroyExportCharts };
 })();
