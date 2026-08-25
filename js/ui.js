@@ -243,11 +243,14 @@ window.FleetUI = (function () {
 
   function renderEstadoComparison(porEstado, activeStateFilter) {
     const sectionContainer = byId('estadoSectionContainer');
+    const mapContainer = byId('mapSectionContainer');
     if (activeStateFilter) {
       if (sectionContainer) sectionContainer.classList.add('hidden');
+      if (mapContainer) mapContainer.classList.add('hidden');
       return;
     }
     if (sectionContainer) sectionContainer.classList.remove('hidden');
+    if (mapContainer) mapContainer.classList.remove('hidden');
 
     const items = porEstado || [];
     const box = byId('estadoChartBox');
@@ -266,6 +269,9 @@ window.FleetUI = (function () {
     if (legend) legend.classList.remove('hidden');
 
     FleetCharts.renderVBarStacked('estadoChartCanvas', items);
+    if (window.FleetMap) {
+      FleetMap.render(items);
+    }
   }
 
   function legendHtml(items) {

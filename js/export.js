@@ -112,6 +112,12 @@ window.FleetExport = (function () {
         if (doc.documentElement) {
           doc.documentElement.classList.remove('dark');
         }
+        doc.querySelectorAll('.vz-state').forEach((p) => {
+          p.setAttribute('stroke', '#FFFFFF');
+          if (!p.getAttribute('fill') || p.getAttribute('fill').toUpperCase() === '#334155') {
+            p.setAttribute('fill', '#E2E8F0');
+          }
+        });
         const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
         const seen = new Set();
         let node = walker.nextNode();
@@ -225,7 +231,10 @@ window.FleetExport = (function () {
     try {
       const sections = Array.from(
         document.querySelectorAll('#reportArea [data-report-section]')
-      ).filter((el) => !el.hasAttribute('data-report-exclude'));
+      ).filter(
+        (el) =>
+          !el.hasAttribute('data-report-exclude') && el.offsetParent !== null
+      );
       const lr = window.FleetUI && window.FleetUI.getLastResult ? window.FleetUI.getLastResult() : null;
       const analysis = lr ? lr.analysis : null;
       const { dateStr, filterSubtitle } = getMetadata();

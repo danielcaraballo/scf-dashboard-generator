@@ -50,6 +50,58 @@ window.FleetConfig = {
   GPS_COLUMN_CANDIDATES: ['gps'],
   VERIFICADO_COLUMN_CANDIDATES: ['verificado'],
 
+  VENEZUELA_STATES: [
+    'Amazonas',
+    'Anzoátegui',
+    'Apure',
+    'Aragua',
+    'Barinas',
+    'Bolívar',
+    'Carabobo',
+    'Cojedes',
+    'Delta Amacuro',
+    'Dependencias Federales',
+    'Distrito Capital',
+    'Falcón',
+    'Guárico',
+    'Lara',
+    'Mérida',
+    'Miranda',
+    'Monagas',
+    'Nueva Esparta',
+    'Portuguesa',
+    'Sucre',
+    'Táchira',
+    'Trujillo',
+    'Vargas',
+    'Yaracuy',
+    'Zulia'
+  ],
+
+  STATE_ALIASES: {
+    'VARGAS': 'Vargas',
+    'LA GUAIRA': 'Vargas',
+    'GUAIRA': 'Vargas',
+    'LA GUAIRA ESS': 'Vargas',
+    'DTTO. CAPITAL': 'Distrito Capital',
+    'DISTRITO CAPITAL': 'Distrito Capital',
+    'CAPITAL': 'Distrito Capital',
+    'D.C.': 'Distrito Capital',
+    'DEPENDENCIAS FEDERALES': 'Dependencias Federales',
+    'DF': 'Dependencias Federales',
+    'DELTA AMACURO': 'Delta Amacuro',
+    'AMACURO': 'Delta Amacuro',
+    'NUEVA ESPARTA': 'Nueva Esparta',
+    'ESPARTA': 'Nueva Esparta',
+    'MARGARITA': 'Nueva Esparta',
+    'ANZOATEGUI': 'Anzoátegui',
+    'BOLIVAR': 'Bolívar',
+    'FALCON': 'Falcón',
+    'GUARICO': 'Guárico',
+    'MERIDA': 'Mérida',
+    'TACHIRA': 'Táchira'
+  },
+
   STATE_ABBREVIATIONS: {
     'REGION NORTE': 'R. NORTE',
     'REGION SUR': 'R. SUR',
@@ -70,6 +122,16 @@ window.FleetConfig = {
   formatStateLabel(value) {
     const norm = this.normalize(value);
     return this.STATE_ABBREVIATIONS[norm] || String(value ?? '').trim();
+  },
+
+  resolveStateName(value) {
+    const norm = this.normalize(value);
+    if (!norm) return null;
+    if (this.STATE_ALIASES[norm]) return this.STATE_ALIASES[norm];
+    for (const state of this.VENEZUELA_STATES) {
+      if (this.normalize(state) === norm) return state;
+    }
+    return null;
   },
 
   toSemantic(raw) {
