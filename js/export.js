@@ -113,11 +113,24 @@ window.FleetExport = (function () {
           doc.documentElement.classList.remove('dark');
         }
         doc.querySelectorAll('.vz-state').forEach((p) => {
+          p.classList.remove('active-state', 'is-hovered', 'is-dimmed');
           p.setAttribute('stroke', '#FFFFFF');
           if (!p.getAttribute('fill') || p.getAttribute('fill').toUpperCase() === '#334155') {
             p.setAttribute('fill', '#E2E8F0');
           }
         });
+        doc.querySelectorAll('.state-badge').forEach((b) => {
+          b.classList.remove('active-badge', 'is-hovered', 'is-dimmed');
+          const rect = b.querySelector('rect');
+          if (rect) rect.setAttribute('fill', '#FFFFFF');
+          const textTspans = b.querySelectorAll('tspan');
+          if (textTspans[0]) textTspans[0].setAttribute('fill', '#0F172A');
+        });
+        const cloneLeaderLines = doc.querySelector('#leaderLinesGroup');
+        if (cloneLeaderLines) {
+          cloneLeaderLines.querySelectorAll('line').forEach((l) => l.setAttribute('stroke', '#94A3B8'));
+          cloneLeaderLines.querySelectorAll('circle').forEach((c) => c.setAttribute('fill', '#64748B'));
+        }
         const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
         const seen = new Set();
         let node = walker.nextNode();

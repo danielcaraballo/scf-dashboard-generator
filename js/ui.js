@@ -110,7 +110,8 @@ window.FleetUI = (function () {
     byId('heroTotal').textContent = fmt.format(analysis.total);
     const heroLabel = byId('heroTotalLabel');
     if (heroLabel) {
-      heroLabel.textContent = activeStateFilter ? `Vehículos en Estado ${activeStateFilter}` : 'Vehículos registrados';
+      const stateLabel = activeStateFilter ? (FleetConfig.resolveStateName(activeStateFilter) || activeStateFilter) : '';
+      heroLabel.textContent = activeStateFilter ? `Vehículos en Estado ${stateLabel}` : 'Vehículos registrados';
     }
     byId('heroPct').textContent = `${analysis.rate.toFixed(1)}%`;
     byId('heroPct').style.color = '#0EA5E9';
@@ -168,7 +169,7 @@ window.FleetUI = (function () {
       </div>`;
   }
 
-  function renderKpiCards(analysis, activeStateFilter) {
+  function renderKpiCards(analysis, activeStateFilter, fullPorEstado, nationalRate) {
     const cards = [];
     const estados = (analysis.porEstado || []).filter((e) => e.total > 0);
 
@@ -195,12 +196,32 @@ window.FleetUI = (function () {
         }));
       }
     } else if (activeStateFilter) {
+      if (fullPorEstado && fullPorEstado.length > 1) {
+        const sorted = [...fullPorEstado].sort((a, b) => b.pct - a.pct || b.total - a.total);
+        const canonActive = FleetConfig.resolveStateName(activeStateFilter);
+        const rankIdx = sorted.findIndex(
+          (e) => FleetConfig.resolveStateName(e.label) === canonActive || FleetConfig.normalize(e.label) === FleetConfig.normalize(activeStateFilter)
+        );
+        if (rankIdx !== -1) {
+          const rank = rankIdx + 1;
+          const diff = analysis.rate - (nationalRate || 0);
+          const isAbove = diff >= 0;
+          cards.push(kpiCardHtml({
+            title: 'Posición nacional',
+            value: `#${rank} de ${sorted.length}`,
+            sub: `<span class="inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap ${isAbove ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">${isAbove ? iconSvg('arrowUp') : iconSvg('arrowDown')}<span>${isAbove ? '+' : ''}${diff.toFixed(1)}% vs promedio</span></span>`,
+            icon: isAbove ? iconSvg('arrowUp') : iconSvg('arrowDown'),
+            chipClass: isAbove ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400'
+          }));
+        }
+      }
+
       if (analysis.fuel && analysis.fuel.length > 0) {
         const topFuel = analysis.fuel[0];
         cards.push(kpiCardHtml({
           title: 'Combustible principal',
           value: topFuel.label,
-          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium dark:text-slate-400">${fmt.format(topFuel.count)} de ${fmt.format(analysis.total)} vhs · ${topFuel.pct.toFixed(1)}%</span>`,
+          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium dark:text-slate-400">${fmt.format(topFuel.count)} de ${fmt.format(analysis.total)} vehículos · ${topFuel.pct.toFixed(1)}%</span>`,
           icon: iconSvg('fire'),
           chipClass: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400'
         }));
@@ -211,7 +232,7 @@ window.FleetUI = (function () {
         cards.push(kpiCardHtml({
           title: 'Clase principal',
           value: topClase.label,
-          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium dark:text-slate-400">${fmt.format(topClase.count)} de ${fmt.format(analysis.total)} vhs · ${topClase.pct.toFixed(1)}%</span>`,
+          sub: `<span class="text-xs text-slate-500 whitespace-nowrap font-medium dark:text-slate-400">${fmt.format(topClase.count)} de ${fmt.format(analysis.total)} vehículos · ${topClase.pct.toFixed(1)}%</span>`,
           icon: iconSvg('truck'),
           chipClass: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400'
         }));
@@ -241,36 +262,19 @@ window.FleetUI = (function () {
     byId('kpiCardsContainer').innerHTML = cards.join('');
   }
 
-  function renderEstadoComparison(porEstado, activeStateFilter) {
-    const sectionContainer = byId('estadoSectionContainer');
+  function renderMapSection(porEstado, activeStateFilter, fullPorEstado) {
     const mapContainer = byId('mapSectionContainer');
-    if (activeStateFilter) {
-      if (sectionContainer) sectionContainer.classList.add('hidden');
-      if (mapContainer) mapContainer.classList.add('hidden');
-      return;
-    }
-    if (sectionContainer) sectionContainer.classList.remove('hidden');
-    if (mapContainer) mapContainer.classList.remove('hidden');
+    if (!mapContainer) return;
 
-    const items = porEstado || [];
-    const box = byId('estadoChartBox');
-    const empty = byId('estadoEmpty');
-    const legend = byId('estadoLegend');
-
+    const items = fullPorEstado || porEstado || [];
     if (!items.length) {
-      if (box) box.classList.add('hidden');
-      if (legend) legend.classList.add('hidden');
-      if (empty) empty.classList.remove('hidden');
+      mapContainer.classList.add('hidden');
       return;
     }
 
-    if (empty) empty.classList.add('hidden');
-    if (box) box.classList.remove('hidden');
-    if (legend) legend.classList.remove('hidden');
-
-    FleetCharts.renderVBarStacked('estadoChartCanvas', items);
+    mapContainer.classList.remove('hidden');
     if (window.FleetMap) {
-      FleetMap.render(items);
+      FleetMap.render(items, lastResult, activeStateFilter);
     }
   }
 
@@ -376,14 +380,14 @@ window.FleetUI = (function () {
 
   function render(result) {
     lastResult = result;
-    const { analysis, file, activeStateFilter, rawRows, cols } = result;
+    const { analysis, file, activeStateFilter, rawRows, cols, fullPorEstado, nationalRate } = result;
 
     renderStateFilter(rawRows, cols, activeStateFilter);
     renderQualityBanner(analysis.coverage);
     renderHero(analysis, activeStateFilter);
     renderStatusList(analysis.stats);
-    renderKpiCards(analysis, activeStateFilter);
-    renderEstadoComparison(analysis.porEstado, activeStateFilter);
+    renderKpiCards(analysis, activeStateFilter, fullPorEstado, nationalRate);
+    renderMapSection(analysis.porEstado, activeStateFilter, fullPorEstado);
     renderFuelSection(analysis.fuel);
     renderClaseSection(analysis.clase);
     renderCompleteness(analysis);

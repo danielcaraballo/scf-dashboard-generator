@@ -75,7 +75,8 @@ window.FleetConfig = {
     'Trujillo',
     'Vargas',
     'Yaracuy',
-    'Zulia'
+    'Zulia',
+    'Guayana Esequiba'
   ],
 
   STATE_ALIASES: {
@@ -99,7 +100,10 @@ window.FleetConfig = {
     'FALCON': 'Falcón',
     'GUARICO': 'Guárico',
     'MERIDA': 'Mérida',
-    'TACHIRA': 'Táchira'
+    'TACHIRA': 'Táchira',
+    'GUAYANA ESEQUIBA': 'Guayana Esequiba',
+    'ESEQUIBO': 'Guayana Esequiba',
+    'ZONA EN RECLAMACION': 'Guayana Esequiba'
   },
 
   STATE_ABBREVIATIONS: {

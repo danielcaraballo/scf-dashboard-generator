@@ -265,16 +265,6 @@ window.FleetCharts = (function () {
         renderHBar(canvas, analysis.clase, '#0EA5E9', { theme: 'light' });
       }
     }
-
-    if (analysis.porEstado && analysis.porEstado.length) {
-      const section = q('#estadoSectionContainer');
-      if (!section || !section.classList.contains('hidden')) {
-        const canvas = q('#estadoChartCanvas');
-        if (canvas) {
-          renderVBarStacked(canvas, analysis.porEstado, { theme: 'light' });
-        }
-      }
-    }
   }
 
   function destroyAll() {

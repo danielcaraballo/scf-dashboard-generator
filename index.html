@@ -74,10 +74,59 @@
       }
       .vz-state {
         transition: filter 0.15s ease, stroke-width 0.15s ease;
+        touch-action: manipulation;
+        outline: none;
       }
-      .vz-state:hover {
-        filter: brightness(1.12);
-        stroke-width: 1.4px;
+      .vz-state.has-data {
+        cursor: pointer;
+      }
+      .vz-state.has-data:hover,
+      .vz-state.has-data.is-hovered {
+        filter: brightness(1.14);
+        stroke-width: 1.8px !important;
+      }
+      .vz-state.active-state {
+        filter: brightness(1.16) drop-shadow(0 0 5px rgba(14, 165, 233, 0.6));
+        stroke: #0ea5e9 !important;
+        stroke-width: 2.2px !important;
+        opacity: 1 !important;
+      }
+      .vz-state.is-dimmed {
+        opacity: 0.32;
+      }
+      .vz-state.no-data {
+        cursor: default;
+        pointer-events: none;
+      }
+      .state-badge text,
+      .state-badge tspan {
+        pointer-events: none;
+      }
+      .state-badge.has-data {
+        cursor: pointer;
+        touch-action: manipulation;
+        outline: none;
+      }
+      .state-badge.has-data rect {
+        transition: stroke-width 0.15s ease, fill 0.15s ease, stroke 0.15s ease;
+      }
+      .state-badge.has-data:hover rect,
+      .state-badge.has-data.is-hovered rect {
+        stroke-width: 2.2px !important;
+      }
+      .state-badge.active-badge rect {
+        stroke: #0ea5e9 !important;
+        stroke-width: 2.4px !important;
+      }
+      .state-badge.is-dimmed {
+        opacity: 0.32;
+      }
+      .state-badge.no-data {
+        cursor: default;
+        pointer-events: none;
+      }
+      #badgesGroup, #leaderLinesGroup {
+        transition: opacity 0.22s ease-in-out;
       }
       #tvExitBtn {
         display: none;
@@ -523,106 +572,86 @@
             id="kpiCardsContainer"
             class="flex flex-wrap -m-2"
           ></div>
-
-          <div id="estadoSectionContainer" class="flex flex-wrap -m-2">
-            <div class="w-full p-2">
-              <div class="rounded-md border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800">
-                <div
-                  class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3"
-                >
-                  <h3
-                    class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                  >
-                    Operatividad por estado
-                  </h3>
-                  <div
-                    id="estadoLegend"
-                    class="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-300"
-                  >
-                    <span class="inline-flex items-center gap-1.5">
-                      <span
-                        class="w-2.5 h-2.5 rounded-full bg-emerald-500"
-                      ></span>
-                      Operativos
-                    </span>
-                    <span class="inline-flex items-center gap-1.5">
-                      <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                      No operativos
-                    </span>
-                  </div>
-                </div>
-                <div id="estadoChartBox" class="h-60 sm:h-64 w-full">
-                  <canvas
-                    id="estadoChartCanvas"
-                    aria-label="Operatividad por estado (operativos vs no operativos)"
-                    role="img"
-                  ></canvas>
-                </div>
-                <div
-                  id="estadoEmpty"
-                  class="hidden py-12 text-center text-sm text-slate-400 dark:text-slate-500"
-                >
-                  <svg
-                    class="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="1.5"
-                      d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="1.5"
-                      d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
-                    />
-                  </svg>
-                  Columna de ubicación geográfica (Estado) no detectada en el CSV.
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div id="mapSectionContainer" class="flex flex-wrap -m-2" data-report-section="pagemap">
           <div class="w-full p-2">
             <div class="rounded-md border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800">
-              <div
-                class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3"
-              >
-                <h3
-                  class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                >
-                  Mapa de operatividad por estado
-                </h3>
-                <div
-                  id="mapLegend"
-                  class="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-300"
-                >
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    &ge;80%
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                    50–79%
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                    &lt;50%
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                    Sin datos
-                  </span>
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3
+                    class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  >
+                    Mapa de operatividad por estado
+                  </h3>
+                  <span id="mapActiveFilterNotice" class="hidden items-center gap-1 text-xs font-semibold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 px-2 py-0.5 rounded-full border border-sky-200 dark:border-sky-500/30"></span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2" data-report-exclude>
+                  <div
+                    class="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-0.5 rounded-lg text-xs font-medium border border-slate-200/80 dark:border-slate-600/80"
+                    role="group"
+                    aria-label="Modo de etiquetas del mapa"
+                  >
+                    <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 px-1.5 hidden sm:inline">ETIQUETAS:</span>
+                    <button
+                      id="mapTagModeNone"
+                      type="button"
+                      class="px-2 py-1 rounded-md text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 font-semibold shadow-xs transition-all touch-manipulation"
+                    >
+                      Sin tags
+                    </button>
+                    <button
+                      id="mapTagModePct"
+                      type="button"
+                      class="px-2 py-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-all touch-manipulation"
+                    >
+                      % Operativo
+                    </button>
+                    <button
+                      id="mapTagModeVeh"
+                      type="button"
+                      class="px-2 py-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-all touch-manipulation"
+                    >
+                      Vehículos
+                    </button>
+                  </div>
+                  <button
+                    id="mapExportPngBtn"
+                    type="button"
+                    title="Exportar mapa como imagen PNG en alta resolución"
+                    class="px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold transition-all flex items-center gap-1 border border-slate-200/80 dark:border-slate-600/80 touch-manipulation"
+                  >
+                    <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span class="hidden xs:inline">Descargar</span>
+                    <span>PNG</span>
+                  </button>
                 </div>
               </div>
-              <div class="flex flex-col lg:flex-row gap-4 sm:gap-6">
-                <div id="mapVzWrapper" class="relative w-full max-w-md mx-auto lg:max-w-[52%] lg:mx-0 shrink-0 min-w-0">
+              <div
+                id="mapLegend"
+                class="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-300 mb-3"
+              >
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                  &ge;80%
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  50–79%
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                  &lt;50%
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                  Sin datos
+                </span>
+              </div>
+              <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
+                <div id="mapVzWrapper" class="relative w-full max-w-lg mx-auto lg:max-w-[48%] lg:mx-0 shrink-0 min-w-0">
                   <div id="mapVzBox" class="w-full" aria-label="Mapa de Venezuela con operatividad por estado" role="img"></div>
                   <div
                     id="mapTooltip"
@@ -630,7 +659,7 @@
                     class="hidden absolute z-20 pointer-events-none rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm min-w-[150px] dark:border-slate-700 dark:bg-slate-900"
                   ></div>
                 </div>
-                <div id="mapRanking" class="flex-1 min-w-0 space-y-2 self-start lg:max-h-72 lg:overflow-y-auto"></div>
+                <div id="mapRanking" class="flex-1 min-w-0 self-start"></div>
               </div>
               <div
                 id="mapEmpty"
@@ -762,7 +791,7 @@ class="hidden my-auto py-12 text-center text-sm text-slate-400 dark:text-slate-5
           de reportes.
         </p>
         <p>
-          &copy; 2026 Daniel Caraballo &middot; Todos los derechos reservados.
+          &copy; 2026 EnergyCompany &middot; Todos los derechos reservados.
         </p>
       </footer>
     </main>
