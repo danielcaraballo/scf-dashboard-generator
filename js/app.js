@@ -7,20 +7,32 @@
   const emptyState = document.getElementById("emptyState");
   const stateFilterSelect = document.getElementById("stateFilterSelect");
   const clearFilterBtn = document.getElementById("clearFilterBtn");
+  const activeFleetBtn = document.getElementById("activeFleetBtn");
 
   let currentRows = null;
   let currentCols = null;
   let currentFile = null;
-  let fullPorEstado = null;
-  let nationalRate = 0;
+  let currentStateFilter = "";
+  let activeFleetOnly = false;
 
-  function applyFilter(selectedStateNorm) {
+  function applyFilters() {
     if (!currentRows || !currentCols) return;
 
-    let filteredRows = currentRows;
-    if (selectedStateNorm && currentCols.geo) {
-      filteredRows = currentRows.filter(
-        (row) => FleetConfig.normalize(row[currentCols.geo]) === selectedStateNorm
+    let baseRows = currentRows;
+    if (activeFleetOnly && currentCols.status) {
+      baseRows = currentRows.filter((row) =>
+        FleetConfig.isActiveFleet(row[currentCols.status])
+      );
+    }
+
+    const currentFullPorEstado = FleetProcessing.operatividadPorEstado(baseRows, currentCols);
+    const fullAnalysis = FleetProcessing.analyze(baseRows, currentCols);
+    const currentNationalRate = fullAnalysis ? fullAnalysis.rate : 0;
+
+    let filteredRows = baseRows;
+    if (currentStateFilter && currentCols.geo) {
+      filteredRows = baseRows.filter(
+        (row) => FleetConfig.normalize(row[currentCols.geo]) === currentStateFilter
       );
     }
 
@@ -28,11 +40,12 @@
     FleetUI.render({
       analysis,
       file: currentFile,
-      activeStateFilter: selectedStateNorm,
+      activeStateFilter: currentStateFilter,
+      activeFleetOnly,
       rawRows: currentRows,
       cols: currentCols,
-      fullPorEstado,
-      nationalRate
+      fullPorEstado: currentFullPorEstado,
+      nationalRate: currentNationalRate
     });
   }
 
@@ -42,8 +55,8 @@
     currentRows = null;
     currentCols = null;
     currentFile = null;
-    fullPorEstado = null;
-    nationalRate = 0;
+    currentStateFilter = "";
+    activeFleetOnly = false;
     if (file.size === 0) {
       FleetUI.showError("El archivo está vacío (0 bytes).");
       return;
@@ -78,9 +91,6 @@
         currentRows = rows;
         currentCols = cols;
         currentFile = file;
-        fullPorEstado = FleetProcessing.operatividadPorEstado(rows, cols);
-        const fullAnalysis = FleetProcessing.analyze(rows, cols);
-        nationalRate = fullAnalysis ? fullAnalysis.rate : 0;
 
         let initialFilterState = "";
         if (cols && cols.geo && rows && rows.length > 0) {
@@ -98,7 +108,9 @@
           stateFilterSelect.value = initialFilterState;
         }
 
-        applyFilter(initialFilterState);
+        currentStateFilter = initialFilterState;
+        activeFleetOnly = false;
+        applyFilters();
       },
       (err) => {
         const msg =
@@ -112,14 +124,24 @@
 
   if (stateFilterSelect) {
     stateFilterSelect.addEventListener("change", (e) => {
-      applyFilter(e.target.value);
+      currentStateFilter = e.target.value;
+      applyFilters();
+    });
+  }
+
+  if (activeFleetBtn) {
+    activeFleetBtn.addEventListener("click", () => {
+      activeFleetOnly = !activeFleetOnly;
+      applyFilters();
     });
   }
 
   if (clearFilterBtn) {
     clearFilterBtn.addEventListener("click", () => {
+      currentStateFilter = "";
+      activeFleetOnly = false;
       if (stateFilterSelect) stateFilterSelect.value = "";
-      applyFilter("");
+      applyFilters();
     });
   }
 

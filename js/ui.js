@@ -65,54 +65,107 @@ window.FleetUI = (function () {
     return Object.values(counts).sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
   }
 
-  function renderStateFilter(rawRows, cols, activeStateFilter) {
+  function renderFilters(rawRows, cols, activeStateFilter, activeFleetOnly) {
     const filterBox = byId('filterBarBox');
     const select = byId('stateFilterSelect');
     const badge = byId('activeFilterBadge');
     const badgeText = byId('activeFilterText');
+    const activeFleetBtn = byId('activeFleetBtn');
+    const stateFilterGroup = byId('stateFilterGroup');
 
-    if (!filterBox || !select) return;
+    if (!filterBox) return;
 
-    if (!cols || !cols.geo || !rawRows || rawRows.length === 0) {
-      filterBox.classList.add('hidden');
-      return;
-    }
-
-    const states = extractStates(rawRows, cols.geo);
-    if (states.length === 0) {
+    if (!rawRows || rawRows.length === 0) {
       filterBox.classList.add('hidden');
       return;
     }
 
     filterBox.classList.remove('hidden');
 
-    select.innerHTML = `<option value="">Todos los Estados</option>` +
-      states.map((s) => `<option value="${escapeHtml(s.norm)}">${escapeHtml(s.label)}</option>`).join('');
+    const hasGeo = Boolean(cols && cols.geo);
+    if (stateFilterGroup) {
+      if (hasGeo) {
+        stateFilterGroup.classList.remove('hidden');
+      } else {
+        stateFilterGroup.classList.add('hidden');
+      }
+    }
 
-    select.value = activeStateFilter || '';
+    if (hasGeo && select) {
+      const states = extractStates(rawRows, cols.geo);
+      select.innerHTML = `<option value="">Todos los Estados</option>` +
+        states.map((s) => `<option value="${escapeHtml(s.norm)}">${escapeHtml(s.label)}</option>`).join('');
+      select.value = activeStateFilter || '';
+    }
 
-    if (activeStateFilter) {
-      const activeState = states.find((s) => s.norm === activeStateFilter);
-      const label = activeState ? activeState.label : activeStateFilter;
-      const count = activeState ? activeState.count : 0;
-      badgeText.textContent = `Filtro: Estado ${label}`;
-      badge.classList.remove('hidden');
-      badge.classList.add('flex');
-    } else {
-      badge.classList.add('hidden');
-      badge.classList.remove('flex');
+    if (activeFleetBtn) {
+      activeFleetBtn.setAttribute('aria-pressed', activeFleetOnly ? 'true' : 'false');
+      const svg = activeFleetBtn.querySelector('svg');
+      const dot = byId('activeFleetDot');
+      if (activeFleetOnly) {
+        activeFleetBtn.className = 'inline-flex items-center justify-center gap-1.5 rounded-md border border-sky-500 bg-sky-500 px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-semibold text-white hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500/30 shadow-xs cursor-pointer transition-all dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500 w-full sm:w-auto shrink-0';
+        if (svg) svg.className = 'w-4 h-4 shrink-0 text-white transition-colors';
+        if (dot) dot.classList.remove('hidden');
+      } else {
+        activeFleetBtn.className = 'inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer transition-all dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 w-full sm:w-auto shrink-0';
+        if (svg) svg.className = 'w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 transition-colors';
+        if (dot) dot.classList.add('hidden');
+      }
+    }
+
+    if (badge && badgeText) {
+      const parts = [];
+      if (activeStateFilter && hasGeo) {
+        const states = extractStates(rawRows, cols.geo);
+        const activeState = states.find((s) => s.norm === activeStateFilter);
+        const label = activeState ? activeState.label : (FleetConfig.resolveStateName(activeStateFilter) || activeStateFilter);
+        parts.push(`Estado ${label}`);
+      }
+      if (activeFleetOnly) {
+        parts.push('Flota Activa');
+      }
+
+      if (parts.length > 0) {
+        const prefix = parts.length > 1 ? 'Filtros: ' : 'Filtro: ';
+        badgeText.textContent = prefix + parts.join(' · ');
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
+        const clearBtn = byId('clearFilterBtn');
+        if (clearBtn) {
+          clearBtn.textContent = parts.length > 1 ? 'Limpiar filtros' : 'Limpiar filtro';
+        }
+      } else {
+        badge.classList.add('hidden');
+        badge.classList.remove('flex');
+      }
     }
   }
 
-  function renderHero(analysis, activeStateFilter) {
+  const renderStateFilter = renderFilters;
+
+  function renderHero(analysis, activeStateFilter, activeFleetOnly) {
     const operativos = statFor(analysis.stats, 'operativo');
 
     byId('heroTotal').textContent = fmt.format(analysis.total);
     const heroLabel = byId('heroTotalLabel');
     if (heroLabel) {
       const stateLabel = activeStateFilter ? (FleetConfig.resolveStateName(activeStateFilter) || activeStateFilter) : '';
-      heroLabel.textContent = activeStateFilter ? `Vehículos en Estado ${stateLabel}` : 'Vehículos registrados';
+      if (activeFleetOnly && stateLabel) {
+        heroLabel.textContent = `Flota activa en Estado ${stateLabel}`;
+      } else if (activeFleetOnly) {
+        heroLabel.textContent = 'Vehículos en flota activa';
+      } else if (stateLabel) {
+        heroLabel.textContent = `Vehículos en Estado ${stateLabel}`;
+      } else {
+        heroLabel.textContent = 'Vehículos registrados';
+      }
     }
+
+    const heroPctLabel = byId('heroPctLabel');
+    if (heroPctLabel) {
+      heroPctLabel.textContent = activeFleetOnly ? 'Operatividad flota activa' : 'Operatividad general';
+    }
+
     byId('heroPct').textContent = `${analysis.rate.toFixed(1)}%`;
     byId('heroPct').style.color = '#0EA5E9';
     byId('heroBarBg').className = 'h-2 rounded-full overflow-hidden bg-sky-50 dark:bg-sky-500/15';
@@ -131,20 +184,36 @@ window.FleetUI = (function () {
   }
 
   function renderStatusList(stats) {
-    byId('statusList').innerHTML = stats
+    const validStats = stats
       .filter((s) => s.count > 0)
-      .sort((a, b) => b.count - a.count)
+      .sort((a, b) => b.count - a.count);
+
+    const isMultiCol = validStats.length >= 5;
+    const statusList = byId('statusList');
+    const countBadge = byId('statusCountBadge');
+
+    if (countBadge) {
+      countBadge.textContent = validStats.length > 0 ? `${validStats.length} estatus` : '';
+    }
+
+    if (isMultiCol) {
+      statusList.className = 'flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2 min-h-0 content-start';
+    } else {
+      statusList.className = 'flex-1 flex flex-col justify-center gap-2.5 min-h-0';
+    }
+
+    statusList.innerHTML = validStats
       .map((s) => `
-        <div class="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+        <div class="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm min-w-0">
           <div class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${s.color}"></div>
           <span class="text-slate-700 flex-1 min-w-0 truncate font-medium dark:text-slate-200" title="${escapeHtml(s.label)}">${escapeHtml(s.label)}</span>
-          <div class="flex items-center gap-2 flex-1 min-w-[36px] sm:min-w-[60px] max-w-[100px] sm:max-w-[200px]">
-            <div class="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
+          <div class="flex items-center ${isMultiCol ? 'w-8 sm:w-10' : 'w-16 sm:w-24'} shrink-0">
+            <div class="w-full h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
               <div class="h-full rounded-full transition-all duration-300" style="width:${s.pct}%; background:${s.color}"></div>
             </div>
           </div>
-          <span class="font-semibold text-slate-500 shrink-0 w-11 sm:w-14 text-right dark:text-slate-400">${s.pct.toFixed(1)}%</span>
-          <span class="font-bold text-slate-800 shrink-0 w-10 sm:w-14 text-right min-w-[36px] dark:text-slate-100">${fmt.format(s.count)}</span>
+          <span class="font-semibold text-slate-500 shrink-0 w-11 sm:w-12 text-right text-xs dark:text-slate-400">${s.pct.toFixed(1)}%</span>
+          <span class="font-bold text-slate-800 shrink-0 w-10 sm:w-12 text-right min-w-[32px] text-xs sm:text-sm dark:text-slate-100">${fmt.format(s.count)}</span>
         </div>`)
       .join('');
   }
@@ -353,12 +422,12 @@ window.FleetUI = (function () {
     }
   }
 
-  function renderCompleteness(analysis) {
+  function renderCompleteness(analysis, activeFleetOnly) {
     const verified = analysis.verificado;
     const geoCount = analysis.porEstado ? analysis.porEstado.length : 0;
 
     const cards = [
-      ['Total registros', fmt.format(analysis.total)],
+      [activeFleetOnly ? 'Total flota activa' : 'Total registros', fmt.format(analysis.total)],
       ['Vehículos verificados', verified ? `${fmt.format(verified.yes)} (${verified.pct.toFixed(0)}%)` : 'Sin datos'],
       ['Estados cubiertos', geoCount ? fmt.format(geoCount) : 'Sin datos']
     ];
@@ -380,17 +449,17 @@ window.FleetUI = (function () {
 
   function render(result) {
     lastResult = result;
-    const { analysis, file, activeStateFilter, rawRows, cols, fullPorEstado, nationalRate } = result;
+    const { analysis, file, activeStateFilter, activeFleetOnly, rawRows, cols, fullPorEstado, nationalRate } = result;
 
-    renderStateFilter(rawRows, cols, activeStateFilter);
+    renderFilters(rawRows, cols, activeStateFilter, activeFleetOnly);
     renderQualityBanner(analysis.coverage);
-    renderHero(analysis, activeStateFilter);
+    renderHero(analysis, activeStateFilter, activeFleetOnly);
     renderStatusList(analysis.stats);
     renderKpiCards(analysis, activeStateFilter, fullPorEstado, nationalRate);
     renderMapSection(analysis.porEstado, activeStateFilter, fullPorEstado);
     renderFuelSection(analysis.fuel);
     renderClaseSection(analysis.clase);
-    renderCompleteness(analysis);
+    renderCompleteness(analysis, activeFleetOnly);
 
     byId('emptyState').classList.add('hidden');
     byId('reportArea').classList.remove('hidden');
@@ -432,6 +501,26 @@ window.FleetUI = (function () {
     if (qualityBox) qualityBox.classList.add('hidden');
     const filterBox = byId('filterBarBox');
     if (filterBox) filterBox.classList.add('hidden');
+    const activeFleetBtn = byId('activeFleetBtn');
+    if (activeFleetBtn) {
+      activeFleetBtn.setAttribute('aria-pressed', 'false');
+      activeFleetBtn.className = 'inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer transition-all dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 w-full sm:w-auto shrink-0';
+      const svg = activeFleetBtn.querySelector('svg');
+      if (svg) svg.className = 'w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 transition-colors';
+      const dot = byId('activeFleetDot');
+      if (dot) dot.classList.add('hidden');
+    }
+    const select = byId('stateFilterSelect');
+    if (select) select.value = '';
+    const badge = byId('activeFilterBadge');
+    if (badge) {
+      badge.classList.add('hidden');
+      badge.classList.remove('flex');
+    }
+    const countBadge = byId('statusCountBadge');
+    if (countBadge) countBadge.textContent = '';
+    const statusList = byId('statusList');
+    if (statusList) statusList.innerHTML = '';
     clearError();
   }
 

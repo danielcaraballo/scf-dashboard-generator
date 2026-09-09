@@ -78,4 +78,4 @@ No requiere proceso de compilación ni instalación de dependencias (`node_modul
 
 ---
 
-Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+Este proyecto está bajo la licencia MIT.

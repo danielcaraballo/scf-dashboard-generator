@@ -144,6 +144,13 @@ window.FleetConfig = {
     return this.STATUS_MAP[norm] ?? 'sin_clasificar';
   },
 
+  ACTIVE_STATUSES: ['operativo', 'en_reparacion', 'inactivo'],
+
+  isActiveFleet(raw) {
+    const semantic = this.toSemantic(raw);
+    return semantic === 'operativo' || semantic === 'en_reparacion' || semantic === 'inactivo';
+  },
+
   escapeHtml(value) {
     if (value === null || value === undefined) return '';
     return String(value)
