@@ -29,7 +29,11 @@ window.FleetTV = (function () {
 
   if (fullscreenSupported) {
     document.addEventListener("fullscreenchange", () => {
-      setActive(Boolean(document.fullscreenElement));
+      if (!document.fullscreenElement) {
+        setActive(false);
+      } else if (document.fullscreenElement === document.documentElement) {
+        setActive(true);
+      }
     });
   }
 

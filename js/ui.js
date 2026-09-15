@@ -58,20 +58,23 @@ window.FleetUI = (function () {
       const norm = FleetConfig.normalize(val);
       if (!norm) continue;
       if (!counts[norm]) {
-        counts[norm] = { norm, label: norm, count: 0 };
+        const canon = FleetConfig.resolveStateName(norm);
+        counts[norm] = { norm, label: canon || norm, count: 0 };
       }
       counts[norm].count++;
     }
     return Object.values(counts).sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
   }
 
-  function renderFilters(rawRows, cols, activeStateFilter, activeFleetOnly) {
+  function renderFilters(rawRows, cols, activeStateFilter, activeFleetOnly, analysis) {
     const filterBox = byId('filterBarBox');
     const select = byId('stateFilterSelect');
     const badge = byId('activeFilterBadge');
     const badgeText = byId('activeFilterText');
     const activeFleetBtn = byId('activeFleetBtn');
     const stateFilterGroup = byId('stateFilterGroup');
+    const clearBtn = byId('clearFilterBtn');
+    const countSummary = byId('filterCountSummary');
 
     if (!filterBox) return;
 
@@ -86,15 +89,18 @@ window.FleetUI = (function () {
     if (stateFilterGroup) {
       if (hasGeo) {
         stateFilterGroup.classList.remove('hidden');
+        stateFilterGroup.classList.add('inline-flex');
       } else {
         stateFilterGroup.classList.add('hidden');
+        stateFilterGroup.classList.remove('inline-flex');
       }
     }
 
     if (hasGeo && select) {
       const states = extractStates(rawRows, cols.geo);
-      select.innerHTML = `<option value="">Todos los Estados</option>` +
-        states.map((s) => `<option value="${escapeHtml(s.norm)}">${escapeHtml(s.label)}</option>`).join('');
+      const totalRaw = rawRows.length;
+      select.innerHTML = `<option value="">Todos los Estados (${fmt.format(totalRaw)})</option>` +
+        states.map((s) => `<option value="${escapeHtml(s.norm)}">${escapeHtml(s.label)} (${fmt.format(s.count)})</option>`).join('');
       select.value = activeStateFilter || '';
     }
 
@@ -103,13 +109,25 @@ window.FleetUI = (function () {
       const svg = activeFleetBtn.querySelector('svg');
       const dot = byId('activeFleetDot');
       if (activeFleetOnly) {
-        activeFleetBtn.className = 'inline-flex items-center justify-center gap-1.5 rounded-md border border-sky-500 bg-sky-500 px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-semibold text-white hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500/30 shadow-xs cursor-pointer transition-all dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500 w-full sm:w-auto shrink-0';
-        if (svg) svg.className = 'w-4 h-4 shrink-0 text-white transition-colors';
+        activeFleetBtn.className = 'inline-flex items-center justify-center gap-1.5 rounded-md border border-sky-500 bg-sky-500 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500/30 shadow-xs cursor-pointer transition-all dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500 shrink-0';
+        if (svg) svg.className = 'w-3.5 h-3.5 shrink-0 text-white transition-colors';
         if (dot) dot.classList.remove('hidden');
       } else {
-        activeFleetBtn.className = 'inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer transition-all dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 w-full sm:w-auto shrink-0';
-        if (svg) svg.className = 'w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 transition-colors';
+        activeFleetBtn.className = 'inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer transition-all dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shrink-0';
+        if (svg) svg.className = 'w-3.5 h-3.5 shrink-0 text-slate-500 dark:text-slate-400 transition-colors';
         if (dot) dot.classList.add('hidden');
+      }
+    }
+
+    const hasActiveFilter = Boolean(activeStateFilter || activeFleetOnly);
+
+    if (clearBtn) {
+      if (hasActiveFilter) {
+        clearBtn.classList.remove('hidden');
+        clearBtn.classList.add('inline-flex');
+      } else {
+        clearBtn.classList.add('hidden');
+        clearBtn.classList.remove('inline-flex');
       }
     }
 
@@ -129,14 +147,22 @@ window.FleetUI = (function () {
         const prefix = parts.length > 1 ? 'Filtros: ' : 'Filtro: ';
         badgeText.textContent = prefix + parts.join(' · ');
         badge.classList.remove('hidden');
-        badge.classList.add('flex');
-        const clearBtn = byId('clearFilterBtn');
-        if (clearBtn) {
-          clearBtn.textContent = parts.length > 1 ? 'Limpiar filtros' : 'Limpiar filtro';
-        }
+        badge.classList.add('inline-flex');
       } else {
         badge.classList.add('hidden');
-        badge.classList.remove('flex');
+        badge.classList.remove('inline-flex');
+        badgeText.textContent = '';
+      }
+    }
+
+    if (countSummary) {
+      const totalRaw = rawRows.length;
+      const currentTotal = (analysis && typeof analysis.total === 'number') ? analysis.total : totalRaw;
+      if (hasActiveFilter) {
+        const pct = totalRaw > 0 ? ((currentTotal / totalRaw) * 100).toFixed(1) : '0';
+        countSummary.innerHTML = `Mostrando <strong class="font-semibold text-slate-900 dark:text-slate-100">${fmt.format(currentTotal)}</strong> de ${fmt.format(totalRaw)} unidades <span class="text-sky-600 dark:text-sky-400 font-semibold">(${pct}%)</span>`;
+      } else {
+        countSummary.innerHTML = `<strong class="font-semibold text-slate-900 dark:text-slate-100">${fmt.format(totalRaw)}</strong> unidades totales`;
       }
     }
   }
@@ -199,22 +225,34 @@ window.FleetUI = (function () {
     if (isMultiCol) {
       statusList.className = 'flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2 min-h-0 content-start';
     } else {
-      statusList.className = 'flex-1 flex flex-col justify-center gap-2.5 min-h-0';
+      statusList.className = 'flex-1 flex flex-col justify-start gap-2.5 sm:gap-3 min-h-0 pt-0.5';
     }
 
     statusList.innerHTML = validStats
-      .map((s) => `
+      .map((s) => {
+        const labelCls = isMultiCol
+          ? 'flex-1 min-w-0 truncate'
+          : 'w-28 sm:w-36 shrink-0 truncate';
+        const barContainerCls = isMultiCol
+          ? 'w-8 sm:w-10 shrink-0'
+          : 'flex-1 min-w-[60px]';
+        const barHeightCls = isMultiCol
+          ? 'h-1.5'
+          : 'h-2';
+
+        return `
         <div class="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm min-w-0">
           <div class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${s.color}"></div>
-          <span class="text-slate-700 flex-1 min-w-0 truncate font-medium dark:text-slate-200" title="${escapeHtml(s.label)}">${escapeHtml(s.label)}</span>
-          <div class="flex items-center ${isMultiCol ? 'w-8 sm:w-10' : 'w-16 sm:w-24'} shrink-0">
-            <div class="w-full h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
+          <span class="text-slate-700 ${labelCls} font-medium dark:text-slate-200" title="${escapeHtml(s.label)}">${escapeHtml(s.label)}</span>
+          <div class="flex items-center ${barContainerCls}">
+            <div class="w-full ${barHeightCls} rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
               <div class="h-full rounded-full transition-all duration-300" style="width:${s.pct}%; background:${s.color}"></div>
             </div>
           </div>
           <span class="font-semibold text-slate-500 shrink-0 w-11 sm:w-12 text-right text-xs dark:text-slate-400">${s.pct.toFixed(1)}%</span>
           <span class="font-bold text-slate-800 shrink-0 w-10 sm:w-12 text-right min-w-[32px] text-xs sm:text-sm dark:text-slate-100">${fmt.format(s.count)}</span>
-        </div>`)
+        </div>`;
+      })
       .join('');
   }
 
@@ -451,7 +489,7 @@ window.FleetUI = (function () {
     lastResult = result;
     const { analysis, file, activeStateFilter, activeFleetOnly, rawRows, cols, fullPorEstado, nationalRate } = result;
 
-    renderFilters(rawRows, cols, activeStateFilter, activeFleetOnly);
+    renderFilters(rawRows, cols, activeStateFilter, activeFleetOnly, analysis);
     renderQualityBanner(analysis.coverage);
     renderHero(analysis, activeStateFilter, activeFleetOnly);
     renderStatusList(analysis.stats);
@@ -504,9 +542,9 @@ window.FleetUI = (function () {
     const activeFleetBtn = byId('activeFleetBtn');
     if (activeFleetBtn) {
       activeFleetBtn.setAttribute('aria-pressed', 'false');
-      activeFleetBtn.className = 'inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer transition-all dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 w-full sm:w-auto shrink-0';
+      activeFleetBtn.className = 'inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer transition-all dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shrink-0';
       const svg = activeFleetBtn.querySelector('svg');
-      if (svg) svg.className = 'w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 transition-colors';
+      if (svg) svg.className = 'w-3.5 h-3.5 shrink-0 text-slate-500 dark:text-slate-400 transition-colors';
       const dot = byId('activeFleetDot');
       if (dot) dot.classList.add('hidden');
     }
@@ -515,8 +553,15 @@ window.FleetUI = (function () {
     const badge = byId('activeFilterBadge');
     if (badge) {
       badge.classList.add('hidden');
-      badge.classList.remove('flex');
+      badge.classList.remove('inline-flex');
     }
+    const clearBtn = byId('clearFilterBtn');
+    if (clearBtn) {
+      clearBtn.classList.add('hidden');
+      clearBtn.classList.remove('inline-flex');
+    }
+    const countSummary = byId('filterCountSummary');
+    if (countSummary) countSummary.innerHTML = '';
     const countBadge = byId('statusCountBadge');
     if (countBadge) countBadge.textContent = '';
     const statusList = byId('statusList');

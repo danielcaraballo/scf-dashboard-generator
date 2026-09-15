@@ -24,9 +24,7 @@ window.FleetMap = (function () {
   }
 
   let currentTagMode = 'none';
-  let activeStateName = null;
   let cachedDataMap = null;
-  let cachedLastResult = null;
   let eventsBound = false;
 
   function buildDataMap(porEstado) {
@@ -43,15 +41,6 @@ window.FleetMap = (function () {
 
   function tooltipHtml(name, d) {
     const tone = toneFor(d.pct);
-    const select = byId('stateFilterSelect');
-    const isFiltered = select && select.value && (
-      FleetConfig.resolveStateName(select.value) === name ||
-      FleetConfig.normalize(select.value) === FleetConfig.normalize(name)
-    );
-
-    const actionText = isFiltered
-      ? '<span class="text-amber-600 dark:text-amber-400 font-semibold">Clic para quitar filtro &times;</span>'
-      : '<span class="text-sky-600 dark:text-sky-400 font-semibold">Clic para filtrar por este estado &rarr;</span>';
 
     return `
       <div class="font-bold text-slate-900 dark:text-slate-100 text-xs mb-1.5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
@@ -66,9 +55,6 @@ window.FleetMap = (function () {
         <div class="flex items-center justify-between gap-3 text-slate-600 dark:text-slate-400">
           <span>Unidades:</span>
           <span class="font-mono font-semibold text-slate-800 dark:text-slate-200">${fmt(d.operativos)} op. / ${fmt(d.total)} total</span>
-        </div>
-        <div class="text-[10px] pt-1 text-right">
-          ${actionText}
         </div>
       </div>`;
   }
@@ -125,43 +111,14 @@ window.FleetMap = (function () {
     });
   }
 
-  function toggleStateFilter(canonicalName) {
-    if (!canonicalName) return;
-    const select = byId('stateFilterSelect');
-    if (!select) return;
-
-    hideTooltip();
-
-    const isCurrentlyFiltered = select.value && (
-      FleetConfig.resolveStateName(select.value) === canonicalName ||
-      FleetConfig.normalize(select.value) === FleetConfig.normalize(canonicalName)
-    );
-
-    if (isCurrentlyFiltered) {
-      select.value = '';
-      select.dispatchEvent(new Event('change'));
-    } else {
-      const opt = Array.from(select.options).find((o) =>
-        o.value && (
-          FleetConfig.resolveStateName(o.value) === canonicalName ||
-          FleetConfig.normalize(o.value) === FleetConfig.normalize(canonicalName)
-        )
-      );
-      if (opt) {
-        select.value = opt.value;
-        select.dispatchEvent(new Event('change'));
-      }
-    }
-  }
-
   function setTagMode(mode) {
     currentTagMode = mode;
     const btnNone = byId('mapTagModeNone');
     const btnPct = byId('mapTagModePct');
     const btnVeh = byId('mapTagModeVeh');
 
-    const activeClass = 'px-2 py-1 rounded-md text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 font-semibold shadow-xs transition-all touch-manipulation';
-    const inactiveClass = 'px-2 py-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-all touch-manipulation';
+    const activeClass = 'w-full text-left px-3 py-2 rounded-md text-xs font-semibold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 shadow-xs transition-all touch-manipulation flex items-center justify-between';
+    const inactiveClass = 'w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/40 dark:hover:bg-slate-700/50 transition-all touch-manipulation flex items-center justify-between';
 
     if (btnNone) btnNone.className = mode === 'none' ? activeClass : inactiveClass;
     if (btnPct) btnPct.className = mode === 'pct' ? activeClass : inactiveClass;
@@ -200,7 +157,7 @@ window.FleetMap = (function () {
           if (mode === 'veh') {
             tspan.textContent = `${fmt(d.total)} ${d.total === 1 ? 'vehículo' : 'vehículos'}`;
           } else {
-            tspan.textContent = `${d.pct.toFixed(0)}% Op.`;
+            tspan.textContent = `${d.pct.toFixed(0)}%`;
           }
         } else {
           tspan.setAttribute('fill', isDark ? '#64748B' : '#94A3B8');
@@ -292,64 +249,59 @@ window.FleetMap = (function () {
     image.src = blobURL;
   }
 
-  function renderRanking(rankingEl, dataMap, canonActive) {
-    const entries = Object.entries(dataMap)
-      .map(([name, d]) => ({ name, ...d }))
-      .sort((a, b) => b.pct - a.pct || b.total - a.total);
+  function isFullscreen() {
+    const mapCard = byId('mapCard');
+    return Boolean(
+      (document.fullscreenElement && document.fullscreenElement === mapCard) ||
+      (mapCard && mapCard.classList.contains('is-fullscreen'))
+    );
+  }
 
-    if (!entries.length) {
-      rankingEl.innerHTML = '';
-      return;
+  function updateFullscreenUi(isFs) {
+    const btnFs = byId('mapFullscreenBtn');
+    const iconExp = byId('mapFsIconExpand');
+    const iconComp = byId('mapFsIconCompress');
+    const btnText = byId('mapFsBtnText');
+    if (iconExp && iconComp) {
+      iconExp.classList.toggle('hidden', isFs);
+      iconComp.classList.toggle('hidden', !isFs);
     }
+    if (btnText) {
+      btnText.textContent = isFs ? 'Salir' : 'Pantalla completa';
+    }
+    if (btnFs) {
+      const title = isFs ? 'Salir de pantalla completa' : 'Pantalla completa';
+      btnFs.setAttribute('title', title);
+      btnFs.setAttribute('aria-label', title);
+      if (isFs) {
+        btnFs.classList.add('bg-sky-50', 'text-sky-600', 'border-sky-300', 'dark:bg-sky-950/50', 'dark:text-sky-400', 'dark:border-sky-800');
+      } else {
+        btnFs.classList.remove('bg-sky-50', 'text-sky-600', 'border-sky-300', 'dark:bg-sky-950/50', 'dark:text-sky-400', 'dark:border-sky-800');
+      }
+    }
+  }
 
-    const isMultiCol = entries.length > 8;
+  function toggleFullscreen() {
+    const mapCard = byId('mapCard');
+    if (!mapCard) return;
 
-    rankingEl.innerHTML = `
-      <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1 pb-1.5 mb-1 border-b border-slate-100 dark:border-slate-800">
-        <span>Ranking por Estado (${entries.length})</span>
-        <span class="text-right">Operatividad</span>
-      </div>
-      <div class="grid grid-cols-1 ${isMultiCol ? 'sm:grid-cols-2' : ''} gap-1.5">
-        ${entries.map((e, i) => {
-          const tone = toneFor(e.pct);
-          const isSelected = canonActive && e.name === canonActive;
-          const containerCls = isSelected
-            ? 'bg-sky-50 dark:bg-sky-500/15 border-sky-400 dark:border-sky-500/50 ring-1 ring-sky-400'
-            : 'bg-slate-50/50 hover:bg-slate-100/80 dark:bg-slate-800/40 dark:hover:bg-slate-700/50 border-slate-200/70 dark:border-slate-700/60';
-
-          return `
-          <div class="px-2 py-1.5 rounded-md border transition-all cursor-pointer ${containerCls}" data-state-ranking="${escapeHtml(e.name)}" tabindex="0" role="button" aria-label="${escapeHtml(e.name)}: ${e.pct.toFixed(0)}% de operatividad (${fmt(e.operativos)} de ${fmt(e.total)} vehículos). Clic para filtrar.">
-            <div class="flex items-center justify-between gap-1 mb-0.5">
-              <div class="flex items-center gap-1 min-w-0">
-                <span class="text-[10px] font-mono font-semibold text-slate-400 dark:text-slate-500 w-3.5 text-right shrink-0">${i + 1}</span>
-                <span class="truncate font-medium text-[11px] text-slate-800 dark:text-slate-100" title="${escapeHtml(e.name)}">${escapeHtml(e.name)}</span>
-                ${isSelected ? '<span class="inline-flex items-center px-1 py-0 rounded text-[8px] font-bold bg-sky-500 text-white shrink-0">Filtrado &times;</span>' : ''}
-              </div>
-              <span class="font-mono text-[11px] font-bold shrink-0 ml-1" style="color:${tone}">${e.pct.toFixed(0)}%</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <div class="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-200/80 dark:bg-slate-700 flex">
-                <div class="h-full bg-emerald-500" style="width:${e.pct}%" title="Operativos: ${fmt(e.operativos)} vehículos"></div>
-                <div class="h-full bg-red-500" style="width:${100 - e.pct}%" title="No operativos: ${fmt(e.inactivos)} vehículos"></div>
-              </div>
-              <span class="text-[9.5px] text-slate-500 dark:text-slate-400 font-mono shrink-0">${fmt(e.operativos)}/${fmt(e.total)}</span>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`;
-
-    rankingEl.querySelectorAll('[data-state-ranking]').forEach((el) => {
-      const stateName = el.getAttribute('data-state-ranking');
-      el.addEventListener('mouseenter', () => highlightState(stateName, true));
-      el.addEventListener('mouseleave', () => highlightState(stateName, false));
-      el.addEventListener('click', () => toggleStateFilter(stateName));
-      el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          toggleStateFilter(stateName);
-        }
-      });
-    });
+    if (isFullscreen()) {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+      mapCard.classList.remove('is-fullscreen');
+      updateFullscreenUi(false);
+    } else {
+      if (typeof mapCard.requestFullscreen === 'function') {
+        mapCard.requestFullscreen().catch(() => {
+          mapCard.classList.add('is-fullscreen');
+          updateFullscreenUi(true);
+        });
+      } else {
+        mapCard.classList.add('is-fullscreen');
+        updateFullscreenUi(true);
+      }
+    }
   }
 
   function bindUiEvents() {
@@ -359,61 +311,52 @@ window.FleetMap = (function () {
     const btnNone = byId('mapTagModeNone');
     const btnPct = byId('mapTagModePct');
     const btnVeh = byId('mapTagModeVeh');
-    const btnPng = byId('mapExportPngBtn');
+    const btnFs = byId('mapFullscreenBtn');
 
     if (btnNone) btnNone.onclick = () => setTagMode('none');
     if (btnPct) btnPct.onclick = () => setTagMode('pct');
     if (btnVeh) btnVeh.onclick = () => setTagMode('veh');
-    if (btnPng) btnPng.onclick = () => exportPng();
+    if (btnFs) btnFs.onclick = () => toggleFullscreen();
+
+    if (typeof document.addEventListener === 'function') {
+      document.addEventListener('fullscreenchange', () => {
+        const mapCard = byId('mapCard');
+        const isFs = Boolean(mapCard && document.fullscreenElement === mapCard);
+        if (!isFs && mapCard) {
+          mapCard.classList.remove('is-fullscreen');
+        }
+        updateFullscreenUi(isFs);
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          const mapCard = byId('mapCard');
+          if (mapCard && mapCard.classList.contains('is-fullscreen')) {
+            mapCard.classList.remove('is-fullscreen');
+            updateFullscreenUi(false);
+          }
+        }
+      });
+    }
   }
 
-  function render(porEstado, lastResult, activeStateFilter) {
+  function render(porEstado) {
     const box = byId('mapVzBox');
     const wrapper = byId('mapVzWrapper');
     const emptyEl = byId('mapEmpty');
-    const rankingEl = byId('mapRanking');
-    const activeNotice = byId('mapActiveFilterNotice');
     if (!box || !wrapper) return;
 
     bindUiEvents();
 
     cachedDataMap = buildDataMap(porEstado);
-    cachedLastResult = lastResult || (window.FleetUI && window.FleetUI.getLastResult ? window.FleetUI.getLastResult() : null);
     const hasData = Object.keys(cachedDataMap).length > 0;
 
     if (!hasData) {
       box.innerHTML = '';
       if (emptyEl) emptyEl.classList.remove('hidden');
-      if (rankingEl) rankingEl.innerHTML = '';
-      if (activeNotice) activeNotice.classList.add('hidden');
       return;
     }
     if (emptyEl) emptyEl.classList.add('hidden');
-
-    const canonActive = activeStateFilter ? FleetConfig.resolveStateName(activeStateFilter) : null;
-    activeStateName = canonActive;
-
-    if (activeNotice) {
-      if (canonActive) {
-        activeNotice.innerHTML = `<span>Filtrado: ${escapeHtml(canonActive)}</span><button type="button" id="mapClearActiveFilterBtn" class="hover:text-sky-800 dark:hover:text-sky-200 ml-0.5 text-sm font-bold" title="Quitar filtro">&times;</button>`;
-        activeNotice.classList.remove('hidden');
-        activeNotice.classList.add('inline-flex');
-        const clearBtn = activeNotice.querySelector('#mapClearActiveFilterBtn');
-        if (clearBtn) {
-          clearBtn.onclick = () => {
-            const select = byId('stateFilterSelect');
-            if (select) {
-              select.value = '';
-              select.dispatchEvent(new Event('change'));
-            }
-          };
-        }
-      } else {
-        activeNotice.classList.add('hidden');
-        activeNotice.classList.remove('inline-flex');
-        activeNotice.innerHTML = '';
-      }
-    }
 
     let svgText;
     try {
@@ -451,40 +394,18 @@ window.FleetMap = (function () {
         path.classList.add('has-data');
         path.classList.remove('no-data');
         path.setAttribute('fill', toneFor(d.pct));
-        path.setAttribute('tabindex', '0');
-        path.setAttribute('role', 'button');
+        path.removeAttribute('tabindex');
+        path.removeAttribute('role');
         path.setAttribute('aria-label', `${name}: ${d.pct.toFixed(1)}% operatividad, ${fmt(d.operativos)} de ${fmt(d.total)} unidades`);
-
-        if (canonActive) {
-          if (name === canonActive) {
-            path.classList.add('active-state');
-            path.classList.remove('is-dimmed');
-          } else {
-            path.classList.remove('active-state');
-            path.classList.add('is-dimmed');
-          }
-        } else {
-          path.classList.remove('active-state', 'is-dimmed');
-        }
 
         path.onmouseenter = (e) => showTooltip(e, name, d);
         path.onmousemove = moveTooltip;
         path.onmouseleave = () => hideTooltip(name);
-        path.onclick = (e) => {
-          e.stopPropagation();
-          toggleStateFilter(name);
-        };
-        path.onkeydown = (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleStateFilter(name);
-          }
-        };
+        path.onclick = null;
+        path.onkeydown = null;
       } else {
-        path.classList.remove('has-data', 'active-state');
+        path.classList.remove('has-data');
         path.classList.add('no-data');
-        if (canonActive) path.classList.add('is-dimmed');
-        else path.classList.remove('is-dimmed');
         path.setAttribute('fill', noDataFill);
         path.removeAttribute('tabindex');
         path.removeAttribute('role');
@@ -513,21 +434,9 @@ window.FleetMap = (function () {
       if (d) {
         badge.classList.add('has-data');
         badge.classList.remove('no-data');
-        badge.setAttribute('tabindex', '0');
-        badge.setAttribute('role', 'button');
+        badge.removeAttribute('tabindex');
+        badge.removeAttribute('role');
         badge.setAttribute('aria-label', `Etiqueta ${name}: ${d.pct.toFixed(0)}% de operatividad`);
-
-        if (canonActive) {
-          if (name === canonActive) {
-            badge.classList.add('active-badge');
-            badge.classList.remove('is-dimmed');
-          } else {
-            badge.classList.remove('active-badge');
-            badge.classList.add('is-dimmed');
-          }
-        } else {
-          badge.classList.remove('active-badge', 'is-dimmed');
-        }
 
         const tone = toneFor(d.pct);
         if (rect) {
@@ -539,28 +448,18 @@ window.FleetMap = (function () {
           if (currentTagMode === 'veh') {
             valTspan.textContent = `${fmt(d.total)} ${d.total === 1 ? 'vehículo' : 'vehículos'}`;
           } else {
-            valTspan.textContent = `${d.pct.toFixed(0)}% Op.`;
+            valTspan.textContent = `${d.pct.toFixed(0)}%`;
           }
         }
 
         badge.onmouseenter = (e) => showTooltip(e, name, d);
         badge.onmousemove = moveTooltip;
         badge.onmouseleave = () => hideTooltip(name);
-        badge.onclick = (e) => {
-          e.stopPropagation();
-          toggleStateFilter(name);
-        };
-        badge.onkeydown = (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleStateFilter(name);
-          }
-        };
+        badge.onclick = null;
+        badge.onkeydown = null;
       } else {
-        badge.classList.remove('has-data', 'active-badge');
+        badge.classList.remove('has-data');
         badge.classList.add('no-data');
-        if (canonActive) badge.classList.add('is-dimmed');
-        else badge.classList.remove('is-dimmed');
         badge.removeAttribute('tabindex');
         badge.removeAttribute('role');
         if (rect) {
@@ -593,9 +492,7 @@ window.FleetMap = (function () {
     }
 
     setTagMode(currentTagMode);
-
-    if (rankingEl) renderRanking(rankingEl, cachedDataMap, canonActive);
   }
 
-  return { render, toggleStateFilter, setTagMode, exportPng, openDrawer: toggleStateFilter, closeDrawer: () => {} };
+  return { render, setTagMode, exportPng, toggleFullscreen };
 })();

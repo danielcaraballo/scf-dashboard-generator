@@ -78,21 +78,12 @@
         outline: none;
       }
       .vz-state.has-data {
-        cursor: pointer;
+        cursor: default;
       }
       .vz-state.has-data:hover,
       .vz-state.has-data.is-hovered {
-        filter: brightness(1.14);
-        stroke-width: 1.8px !important;
-      }
-      .vz-state.active-state {
-        filter: brightness(1.16) drop-shadow(0 0 5px rgba(14, 165, 233, 0.6));
-        stroke: #0ea5e9 !important;
-        stroke-width: 2.2px !important;
-        opacity: 1 !important;
-      }
-      .vz-state.is-dimmed {
-        opacity: 0.32;
+        filter: brightness(1.12);
+        stroke-width: 1.6px !important;
       }
       .vz-state.no-data {
         cursor: default;
@@ -103,7 +94,7 @@
         pointer-events: none;
       }
       .state-badge.has-data {
-        cursor: pointer;
+        cursor: default;
         touch-action: manipulation;
         outline: none;
       }
@@ -112,14 +103,7 @@
       }
       .state-badge.has-data:hover rect,
       .state-badge.has-data.is-hovered rect {
-        stroke-width: 2.2px !important;
-      }
-      .state-badge.active-badge rect {
-        stroke: #0ea5e9 !important;
-        stroke-width: 2.4px !important;
-      }
-      .state-badge.is-dimmed {
-        opacity: 0.32;
+        stroke-width: 1.8px !important;
       }
       .state-badge.no-data {
         cursor: default;
@@ -134,6 +118,37 @@
       body.tv-mode #tvExitBtn {
         display: inline-flex;
       }
+      #mapCard:fullscreen,
+      #mapCard.is-fullscreen {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 9999 !important;
+        overflow-y: auto !important;
+        padding: 1.5rem 2rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        background-color: #FFFFFF !important;
+      }
+      html.dark #mapCard:fullscreen,
+      html.dark #mapCard.is-fullscreen {
+        background-color: #0F172A !important;
+      }
+      #mapCard:fullscreen .map-body-layout,
+      #mapCard.is-fullscreen .map-body-layout {
+        flex: 1 1 auto;
+        align-items: center;
+      }
+      #mapCard:fullscreen #mapVzWrapper,
+      #mapCard.is-fullscreen #mapVzWrapper {
+        max-width: 860px !important;
+      }
       @media (prefers-reduced-motion: reduce) {
         * {
           transition: none !important;
@@ -143,47 +158,47 @@
     </style>
   </head>
 
-  <body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen overflow-x-hidden dark:bg-slate-950 dark:text-slate-100">
+  <body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col overflow-x-hidden dark:bg-slate-950 dark:text-slate-100">
     <header
       class="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-20 dark:border-slate-800 dark:bg-slate-900/80"
     >
       <div
-        class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
+        class="max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4"
       >
         <div class="flex-1 min-w-0">
           <p
-            class="text-[11px] font-semibold uppercase tracking-widest text-sky-600 truncate dark:text-sky-400"
+            class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-sky-600 truncate leading-none mb-0.5 dark:text-sky-400"
           >
             Generador de Tableros &middot; Análisis de Flota
           </p>
           <h1
-            class="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight truncate dark:text-slate-100"
+            class="text-base sm:text-xl font-semibold text-slate-900 leading-snug truncate dark:text-slate-100"
           >
             Tablero de Control de Flota
           </h1>
-          <p id="dragHint" class="hidden text-xs sm:text-sm text-slate-500 truncate mt-0.5 dark:text-slate-400">
+          <p id="dragHint" class="hidden text-xs text-slate-500 truncate mt-0.5 leading-none dark:text-slate-400">
             Archivo cargado:
             <span id="fileName" class="font-medium text-slate-700 dark:text-slate-200">—</span>
             <span id="fileSize" class="text-slate-400 dark:text-slate-500"></span>
           </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
-          <span id="loadStatus" class="hidden text-sm text-slate-600 dark:text-slate-300">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2.5 w-full sm:w-auto">
+          <span id="loadStatus" class="hidden text-xs sm:text-sm text-slate-600 dark:text-slate-300 items-center gap-1.5">
             <span
-              class="w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full animate-spin inline-block"
+              class="w-3.5 h-3.5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin inline-block"
             ></span>
             <span id="loadStatusText">Procesando…</span>
           </span>
 
-          <div id="actionButtons" class="hidden flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <div id="actionButtons" class="hidden flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
             <button
               id="loadBtn"
               type="button"
-              class="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-md bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm transition-colors whitespace-nowrap flex-1 sm:flex-none"
+              class="inline-flex items-center justify-center gap-1.5 rounded-md bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white text-xs font-semibold px-2.5 sm:px-3 py-1.5 shadow-sm transition-colors whitespace-nowrap flex-1 sm:flex-none"
             >
               <svg
-                class="w-4 h-4 shrink-0"
+                class="w-3.5 h-3.5 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -203,10 +218,10 @@
               id="exportBtn"
               type="button"
               disabled
-              class="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-200 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white whitespace-nowrap flex-1 sm:flex-none dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 dark:disabled:hover:bg-slate-800"
+              class="inline-flex items-center justify-center gap-1.5 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold px-2.5 sm:px-3 py-1.5 border border-slate-200 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white whitespace-nowrap flex-1 sm:flex-none dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 dark:disabled:hover:bg-slate-800"
             >
               <svg
-                class="w-4 h-4 shrink-0"
+                class="w-3.5 h-3.5 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -226,10 +241,10 @@
               id="imageBtn"
               type="button"
               disabled
-              class="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-200 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white whitespace-nowrap flex-1 sm:flex-none dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 dark:disabled:hover:bg-slate-800"
+              class="inline-flex items-center justify-center gap-1.5 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold px-2.5 sm:px-3 py-1.5 border border-slate-200 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white whitespace-nowrap flex-1 sm:flex-none dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 dark:disabled:hover:bg-slate-800"
             >
               <svg
-                class="w-4 h-4 shrink-0"
+                class="w-3.5 h-3.5 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -249,10 +264,10 @@
               id="tvModeBtn"
               type="button"
               title="Modo TV: pantalla completa sin controles"
-              class="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-200 shadow-sm transition-colors whitespace-nowrap flex-1 sm:flex-none dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700"
+              class="inline-flex items-center justify-center gap-1.5 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold px-2.5 sm:px-3 py-1.5 border border-slate-200 shadow-sm transition-colors whitespace-nowrap flex-1 sm:flex-none dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700"
             >
               <svg
-                class="w-4 h-4 shrink-0"
+                class="w-3.5 h-3.5 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -274,11 +289,11 @@
             type="button"
             title="Cambiar a modo oscuro"
             aria-label="Cambiar a modo oscuro"
-            class="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-200 shadow-sm transition-colors whitespace-nowrap flex-none dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700"
+            class="inline-flex items-center justify-center rounded-md bg-white hover:bg-slate-50 text-slate-700 px-2 py-1.5 border border-slate-200 shadow-sm transition-colors whitespace-nowrap flex-none dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700"
           >
             <svg
               data-icon="sun"
-              class="w-4 h-4 shrink-0"
+              class="w-3.5 h-3.5 shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -293,7 +308,7 @@
             </svg>
             <svg
               data-icon="moon"
-              class="w-4 h-4 shrink-0 hidden"
+              class="w-3.5 h-3.5 shrink-0 hidden"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -342,7 +357,7 @@
       <span>Salir de Modo TV</span>
     </button>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-5 pb-8 space-y-5">
+    <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-5 pb-8 space-y-5">
       <div
         id="errorBox"
         role="alert"
@@ -396,16 +411,16 @@
         <div
           id="filterBarBox"
           data-report-exclude
-          class="hidden rounded-md border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs dark:border-slate-700 dark:bg-slate-900"
+          class="hidden rounded-md border border-slate-200 bg-white px-3 sm:px-4 py-2 sm:py-2.5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
         >
           <div
-            class="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4"
           >
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
-              <div id="stateFilterGroup" class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap flex-1 min-w-0">
+              <div id="stateFilterGroup" class="relative inline-flex items-center w-full sm:w-auto">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-sky-500">
                   <svg
-                    class="w-4 h-4 text-sky-500 shrink-0"
+                    class="w-3.5 h-3.5 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -415,32 +430,38 @@
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
-                      d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 21l3.47-.63A8.96 8.96 0 0012 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"
+                      d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
                     />
                   </svg>
-                  <label
-                    for="stateFilterSelect"
-                    class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 shrink-0"
-                  >
-                    Filtrar por Estado:
-                  </label>
                 </div>
                 <select
                   id="stateFilterSelect"
-                  class="w-full sm:w-auto rounded-md border border-slate-300 bg-white px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer min-w-0 sm:min-w-[220px] transition-all dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                  aria-label="Filtrar por estado"
+                  class="w-full sm:w-auto rounded-md border border-slate-300 bg-white pl-8 pr-8 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer min-w-0 sm:min-w-[210px] transition-all appearance-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                 >
                   <option value="">Todos los Estados</option>
                 </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400 dark:text-slate-500">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </div>
               </div>
+
               <button
                 id="activeFleetBtn"
                 type="button"
                 aria-pressed="false"
                 title="Filtrar únicamente flota activa (Operativo + En reparación + Inoperativo)"
-                class="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer transition-all dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 w-full sm:w-auto shrink-0"
+                class="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-xs cursor-pointer transition-all dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shrink-0"
               >
                 <svg
-                  class="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 transition-colors"
+                  class="w-3.5 h-3.5 shrink-0 text-slate-500 dark:text-slate-400 transition-colors"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -456,25 +477,37 @@
                 <span>Flota Activa</span>
                 <span
                   id="activeFleetDot"
-                  class="hidden w-2 h-2 rounded-full bg-white shrink-0"
+                  class="hidden w-1.5 h-1.5 rounded-full bg-white shrink-0"
                   aria-hidden="true"
                 ></span>
               </button>
-            </div>
-            <div id="activeFilterBadge" class="hidden items-center gap-2 flex-wrap">
-              <span
-                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30"
-              >
-                <span class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
-                <span id="activeFilterText">Todos los Estados</span>
-              </span>
+
               <button
                 id="clearFilterBtn"
                 type="button"
-                class="text-xs font-medium text-slate-500 hover:text-slate-700 underline transition-colors dark:text-slate-400 dark:hover:text-slate-200"
+                title="Limpiar todos los filtros aplicados"
+                class="hidden inline-flex items-center justify-center gap-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold px-2.5 py-1.5 transition-colors dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 shrink-0"
               >
-                Limpiar filtro
+                <svg class="w-3.5 h-3.5 shrink-0 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span>Limpiar</span>
               </button>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0 self-start sm:self-center">
+              <div id="activeFilterBadge" class="hidden items-center">
+                <span
+                  class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+                  <span id="activeFilterText"></span>
+                </span>
+              </div>
+              <div
+                id="filterCountSummary"
+                class="text-xs text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap"
+              ></div>
             </div>
           </div>
         </div>
@@ -614,91 +647,118 @@
 
         <div id="mapSectionContainer" class="flex flex-wrap -m-2" data-report-section="pagemap">
           <div class="w-full p-2">
-            <div class="rounded-md border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <h3
-                    class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                  >
-                    Mapa de operatividad por estado
-                  </h3>
-                  <span id="mapActiveFilterNotice" class="hidden items-center gap-1 text-xs font-semibold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 px-2 py-0.5 rounded-full border border-sky-200 dark:border-sky-500/30"></span>
-                </div>
-                <div class="flex flex-wrap items-center gap-2" data-report-exclude>
-                  <div
-                    class="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-0.5 rounded-lg text-xs font-medium border border-slate-200/80 dark:border-slate-600/80"
-                    role="group"
-                    aria-label="Modo de etiquetas del mapa"
-                  >
-                    <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 px-1.5 hidden sm:inline">ETIQUETAS:</span>
-                    <button
-                      id="mapTagModeNone"
-                      type="button"
-                      class="px-2 py-1 rounded-md text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 font-semibold shadow-xs transition-all touch-manipulation"
-                    >
-                      Sin tags
-                    </button>
-                    <button
-                      id="mapTagModePct"
-                      type="button"
-                      class="px-2 py-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-all touch-manipulation"
-                    >
-                      % Operativo
-                    </button>
-                    <button
-                      id="mapTagModeVeh"
-                      type="button"
-                      class="px-2 py-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-all touch-manipulation"
-                    >
-                      Vehículos
-                    </button>
-                  </div>
+            <div id="mapCard" class="rounded-md border border-slate-200 bg-white p-5 sm:p-6 lg:p-7 dark:border-slate-700 dark:bg-slate-800 transition-all">
+              <div class="flex items-center justify-between gap-4 mb-5 pb-3 border-b border-slate-100 dark:border-slate-700/60">
+                <h3
+                  class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                >
+                  Mapa de operatividad por estado
+                </h3>
+
+                <div data-report-exclude>
                   <button
-                    id="mapExportPngBtn"
+                    id="mapFullscreenBtn"
                     type="button"
-                    title="Exportar mapa como imagen PNG en alta resolución"
-                    class="px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold transition-all flex items-center gap-1 border border-slate-200/80 dark:border-slate-600/80 touch-manipulation"
+                    title="Pantalla completa"
+                    aria-label="Pantalla completa"
+                    class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200/80 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white text-xs font-medium transition-all touch-manipulation shadow-2xs cursor-pointer"
                   >
-                    <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    <svg id="mapFsIconExpand" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                     </svg>
-                    <span class="hidden xs:inline">Descargar</span>
-                    <span>PNG</span>
+                    <svg id="mapFsIconCompress" class="w-3.5 h-3.5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 14h6m0 0v6m0-6l-7 7m17-11h-6m0 0V4m0 6l7-7m-7 17v-6m0 0h6m-6 0l7 7M10 4v6m0 0H4m6 0L3 3" />
+                    </svg>
+                    <span id="mapFsBtnText" class="hidden sm:inline">Pantalla completa</span>
                   </button>
                 </div>
               </div>
-              <div
-                id="mapLegend"
-                class="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-300 mb-3"
-              >
-                <span class="inline-flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                  &ge;80%
-                </span>
-                <span class="inline-flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                  50–79%
-                </span>
-                <span class="inline-flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                  &lt;50%
-                </span>
-                <span class="inline-flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                  Sin datos
-                </span>
-              </div>
-              <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
-                <div id="mapVzWrapper" class="relative w-full max-w-lg mx-auto lg:max-w-[48%] lg:mx-0 shrink-0 min-w-0">
-                  <div id="mapVzBox" class="w-full" aria-label="Mapa de Venezuela con operatividad por estado" role="img"></div>
-                  <div
-                    id="mapTooltip"
-                    data-report-exclude
-                    class="hidden absolute z-20 pointer-events-none rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm min-w-[150px] dark:border-slate-700 dark:bg-slate-900"
-                  ></div>
+
+              <div class="map-body-layout flex flex-col md:flex-row md:items-center justify-between gap-8 lg:gap-12 px-1 sm:px-2 py-1">
+                <!-- Columna izquierda: Controles y Leyenda vertical -->
+                <div class="flex flex-col gap-6 w-full md:w-56 lg:w-64 shrink-0">
+                  <div class="flex flex-col gap-1.5 w-full" data-report-exclude>
+                    <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 tracking-wider">ETIQUETAS</span>
+                    <div
+                      class="flex flex-col gap-1 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg border border-slate-200/80 dark:border-slate-600/60"
+                      role="group"
+                      aria-label="Modo de etiquetas del mapa"
+                    >
+                      <button
+                        id="mapTagModeNone"
+                        type="button"
+                        class="w-full text-left px-3 py-2 rounded-md text-xs font-semibold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 shadow-xs transition-all touch-manipulation flex items-center justify-between"
+                      >
+                        <span>Sin tags</span>
+                      </button>
+                      <button
+                        id="mapTagModePct"
+                        type="button"
+                        class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/40 dark:hover:bg-slate-700/50 transition-all touch-manipulation flex items-center justify-between"
+                      >
+                        <span>% Operatividad</span>
+                      </button>
+                      <button
+                        id="mapTagModeVeh"
+                        type="button"
+                        class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/40 dark:hover:bg-slate-700/50 transition-all touch-manipulation flex items-center justify-between"
+                      >
+                        <span>Vehículos</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-col gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-700/60 w-full">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 tracking-wider">LEYENDA</span>
+                    <div
+                      id="mapLegend"
+                      class="flex flex-col gap-2 text-xs font-medium text-slate-600 dark:text-slate-300"
+                    >
+                      <div class="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <span class="inline-flex items-center gap-2">
+                          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 shadow-2xs"></span>
+                          <span class="font-medium text-slate-700 dark:text-slate-200">&ge;80%</span>
+                        </span>
+                        <span class="text-[11px] text-slate-400 dark:text-slate-400 font-normal">Alta</span>
+                      </div>
+                      <div class="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <span class="inline-flex items-center gap-2">
+                          <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 shadow-2xs"></span>
+                          <span class="font-medium text-slate-700 dark:text-slate-200">50–79%</span>
+                        </span>
+                        <span class="text-[11px] text-slate-400 dark:text-slate-400 font-normal">Media</span>
+                      </div>
+                      <div class="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <span class="inline-flex items-center gap-2">
+                          <span class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0 shadow-2xs"></span>
+                          <span class="font-medium text-slate-700 dark:text-slate-200">&lt;50%</span>
+                        </span>
+                        <span class="text-[11px] text-slate-400 dark:text-slate-400 font-normal">Baja</span>
+                      </div>
+                      <div class="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <span class="inline-flex items-center gap-2">
+                          <span class="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0 shadow-2xs"></span>
+                          <span class="text-slate-500 dark:text-slate-400">Sin datos</span>
+                        </span>
+                        <span class="text-[11px] text-slate-400 dark:text-slate-500 font-normal">—</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div id="mapRanking" class="flex-1 min-w-0 self-start"></div>
+
+                <!-- Columna derecha: Mapa -->
+                <div class="flex-1 min-w-0 flex items-center justify-center p-2 sm:p-4">
+                  <div id="mapVzWrapper" class="relative w-full max-w-lg lg:max-w-xl xl:max-w-2xl min-w-0 mx-auto">
+                    <div id="mapVzBox" class="w-full" aria-label="Mapa de Venezuela con operatividad por estado" role="img"></div>
+                    <div
+                      id="mapTooltip"
+                      data-report-exclude
+                      class="hidden absolute z-20 pointer-events-none rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm min-w-[150px] dark:border-slate-700 dark:bg-slate-900"
+                    ></div>
+                  </div>
+                </div>
               </div>
+
               <div
                 id="mapEmpty"
                 class="hidden py-12 text-center text-sm text-slate-400 dark:text-slate-500"
@@ -823,16 +883,132 @@ class="hidden my-auto py-12 text-center text-sm text-slate-400 dark:text-slate-5
         </div>
       </section>
 
-      <footer class="text-xs text-slate-400 pt-2 pb-6 text-center space-y-1 px-4 dark:text-slate-500">
-        <p>
-          Tablero de Control de Flota &middot; Análisis interactivo y generación
-          de reportes.
-        </p>
-        <p>
-          &copy; 2026 EnergyCompany &middot; Todos los derechos reservados.
-        </p>
-      </footer>
     </main>
+
+    <footer
+      class="mt-auto border-t border-slate-200 bg-white/60 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/60"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        <div
+          class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-slate-200/80 dark:border-slate-800/80"
+        >
+          <div class="space-y-1.5 max-w-xl">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <div
+                class="flex h-7 w-7 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:bg-sky-500/20 dark:text-sky-400"
+              >
+                <svg
+                  class="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"
+                  />
+                </svg>
+              </div>
+              <span class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                Tablero de Control de Flota
+              </span>
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 border border-emerald-200/60 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                100% Client-Side
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Plataforma interactiva para el análisis de operatividad vehicular, distribución geográfica y generación de reportes ejecutivos.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <a
+              href="https://github.com/danielcaraballo"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:border-slate-300 hover:bg-slate-50 hover:text-sky-600 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-sky-400"
+              title="Perfil de GitHub de Daniel Caraballo"
+            >
+              <svg
+                class="h-4 w-4 fill-current shrink-0"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                />
+              </svg>
+              <span>Daniel Caraballo</span>
+            </a>
+
+            <a
+              href="https://github.com/danielcaraballo/scf-dashboard-generator"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:border-slate-300 hover:bg-slate-50 hover:text-sky-600 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-sky-400"
+              title="Repositorio en GitHub"
+            >
+              <svg
+                class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"
+                />
+              </svg>
+              <span>Código</span>
+            </a>
+          </div>
+        </div>
+
+        <div
+          class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400"
+        >
+          <p>
+            &copy; 2026
+            <a
+              href="https://github.com/danielcaraballo"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-medium text-slate-700 hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400 transition-colors"
+              >Daniel Caraballo</a
+            >
+            &middot; Todos los derechos reservados.
+          </p>
+          <div class="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-[11px]">
+            <svg
+              class="h-3.5 w-3.5 text-emerald-500/90 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+              />
+            </svg>
+            <span>Privacidad garantizada: procesamiento local sin envío de datos</span>
+          </div>
+        </div>
+      </div>
+    </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
