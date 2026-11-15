@@ -151,6 +151,13 @@ window.FleetExport = (function () {
           cloneLeaderLines.querySelectorAll('line').forEach((l) => l.setAttribute('stroke', '#94A3B8'));
           cloneLeaderLines.querySelectorAll('circle').forEach((c) => c.setAttribute('fill', '#64748B'));
         }
+        const cloneGenPanel = doc.querySelector('#mapGeneralPanel');
+        const cloneInspPanel = doc.querySelector('#mapInspectorPanel');
+        if (cloneGenPanel && cloneInspPanel) {
+          cloneGenPanel.classList.remove('hidden');
+          cloneInspPanel.classList.add('hidden');
+          cloneInspPanel.classList.remove('flex');
+        }
         doc.querySelectorAll('.truncate, [style*="ellipsis"]').forEach((el) => {
           el.style.textOverflow = 'clip';
           el.style.whiteSpace = 'normal';

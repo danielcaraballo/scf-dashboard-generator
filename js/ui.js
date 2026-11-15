@@ -542,7 +542,7 @@ window.FleetUI = (function () {
       if (fsWrapper) fsWrapper.classList.remove('hidden');
 
       if (window.FleetMap) {
-        FleetMap.render(items, null);
+        FleetMap.render(items, targetStateName || null);
       }
     }
   }
@@ -702,6 +702,9 @@ window.FleetUI = (function () {
     }
     const cardTitle = byId('mapCardTitle');
     if (cardTitle) cardTitle.textContent = 'Mapa de operatividad por estado';
+    if (window.FleetMap && FleetMap.clearSelection) {
+      FleetMap.clearSelection();
+    }
     const fsWrapper = byId('mapFullscreenWrapper');
     if (fsWrapper) fsWrapper.classList.remove('hidden');
     const miniBox = byId('stateMiniMapBox');

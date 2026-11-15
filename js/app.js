@@ -30,7 +30,7 @@
 
     const currentFullPorEstado = FleetProcessing.operatividadPorEstado(baseRows, currentCols);
 
-    const isStateMode = Boolean(isSingleStateFile || currentStateFilter);
+    const isStateMode = Boolean(isSingleStateFile);
 
     let targetStateName = "";
     if (currentStateFilter) {

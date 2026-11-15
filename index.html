@@ -76,7 +76,9 @@
       .vz-state {
         transition:
           filter 0.15s ease,
-          stroke-width 0.15s ease;
+          stroke-width 0.15s ease,
+          opacity 0.2s ease,
+          stroke 0.15s ease;
         touch-action: manipulation;
         outline: none;
       }
@@ -85,27 +87,25 @@
       }
       .vz-state.has-data:hover,
       .vz-state.has-data.is-hovered {
-        filter: brightness(1.12);
-        stroke-width: 1.6px !important;
+        filter: brightness(1.15);
       }
       .vz-state.is-dimmed {
-        opacity: 0.52;
-        stroke: #94a3b8 !important;
+        opacity: 0.38;
         stroke-width: 0.9px !important;
         transition:
           opacity 0.2s ease,
-          filter 0.15s ease,
-          stroke 0.15s ease;
+          filter 0.15s ease;
       }
       html.dark .vz-state.is-dimmed {
-        opacity: 0.35;
-        stroke: #334155 !important;
+        opacity: 0.28;
       }
       .vz-state.active-state {
         opacity: 1 !important;
-        stroke: #0ea5e9 !important;
-        stroke-width: 2.5px !important;
-        filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.45));
+        filter: brightness(1.18);
+      }
+      .vz-state.is-tier-hovered {
+        opacity: 1 !important;
+        filter: brightness(1.18);
       }
       .vz-state.no-data {
         cursor: default;
@@ -124,22 +124,38 @@
         transition:
           stroke-width 0.15s ease,
           fill 0.15s ease,
-          stroke 0.15s ease;
+          stroke 0.15s ease,
+          filter 0.15s ease;
       }
       .state-badge.has-data:hover rect,
       .state-badge.has-data.is-hovered rect {
-        stroke-width: 1.8px !important;
+        filter: brightness(1.08);
       }
       .state-badge.is-dimmed {
-        opacity: 0.52;
+        opacity: 0.38;
         transition: opacity 0.2s ease;
       }
       html.dark .state-badge.is-dimmed {
-        opacity: 0.35;
+        opacity: 0.28;
       }
       .state-badge.active-badge rect {
-        stroke: #0ea5e9 !important;
-        stroke-width: 2.2px !important;
+        filter: brightness(1.08);
+      }
+      .state-badge.is-tier-hovered rect {
+        filter: brightness(1.08);
+      }
+      @keyframes mapFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-map-fade-in {
+        animation: mapFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
       #badgesGroup,
       #leaderLinesGroup {
@@ -605,7 +621,11 @@
           class="hidden rounded-md border border-amber-200 bg-amber-50/80 p-3.5 sm:p-4 text-xs sm:text-sm text-amber-900 shadow-xs dark:border-amber-900/50 dark:bg-amber-950/60 dark:text-amber-200"
         ></div>
 
-        <div id="page1Container" class="space-y-4 sm:space-y-5" data-report-section="page1">
+        <div
+          id="page1Container"
+          class="space-y-4 sm:space-y-5"
+          data-report-section="page1"
+        >
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
             <div class="lg:col-span-5 flex flex-col">
               <div
@@ -714,7 +734,10 @@
             </div>
           </div>
 
-          <div id="kpiCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"></div>
+          <div
+            id="kpiCardsContainer"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
+          ></div>
 
           <div
             id="secondaryChartsContainer"
@@ -740,7 +763,10 @@
                       role="img"
                     ></canvas>
                   </div>
-                  <div id="fuelLegend" class="flex-1 min-w-0 space-y-1.5 sm:space-y-2"></div>
+                  <div
+                    id="fuelLegend"
+                    class="flex-1 min-w-0 space-y-1.5 sm:space-y-2"
+                  ></div>
                 </div>
                 <div
                   id="fuelEmpty"
@@ -804,10 +830,7 @@
           </div>
         </div>
 
-        <div
-          id="mapSectionContainer"
-          data-report-section="page2"
-        >
+        <div id="mapSectionContainer" data-report-section="page2">
           <div
             id="mapCard"
             class="rounded-md border border-slate-300/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-700 dark:bg-slate-800 transition-all"
@@ -815,14 +838,56 @@
             <div
               class="flex items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-200 dark:border-slate-700/60"
             >
-              <h3
-                id="mapCardTitle"
-                class="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
-              >
-                Mapa de operatividad por estado
-              </h3>
+              <div class="flex items-center gap-2.5 min-w-0">
+                <h3
+                  id="mapCardTitle"
+                  class="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 truncate"
+                >
+                  Mapa de operatividad por estado
+                </h3>
+                <span
+                  id="mapCoverageBadge"
+                  class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/80 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700/80 font-mono shrink-0"
+                >
+                  24 entidades
+                </span>
+                <span
+                  id="mapSelectedStateChip"
+                  class="hidden items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-800 shrink-0"
+                >
+                  <span
+                    class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"
+                  ></span>
+                  <span id="mapSelectedStateChipText">Zulia</span>
+                </span>
+              </div>
 
-              <div id="mapFullscreenWrapper" data-report-exclude>
+              <div
+                id="mapFullscreenWrapper"
+                class="flex items-center gap-2 shrink-0"
+                data-report-exclude
+              >
+                <button
+                  id="mapResetSelectionBtn"
+                  type="button"
+                  class="hidden items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  title="Restablecer selección"
+                >
+                  <svg
+                    class="w-3 h-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  <span>Deseleccionar</span>
+                </button>
                 <button
                   id="mapFullscreenBtn"
                   type="button"
@@ -862,115 +927,161 @@
                     >Pantalla completa</span
                   >
                 </button>
-                </div>
               </div>
+            </div>
 
-              <div id="nationalMapBody">
+            <div id="nationalMapBody">
+              <div
+                class="map-body-layout flex flex-col md:flex-row md:items-start justify-between gap-6 lg:gap-8"
+              >
+                <!-- Columna izquierda: Controles, Leyenda dinámica e Inspector de Estado -->
                 <div
-                  class="map-body-layout flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8"
+                  id="mapSideCol"
+                  class="flex flex-col gap-5 w-full md:w-64 lg:w-72 shrink-0"
                 >
-                  <!-- Columna izquierda: Controles y Leyenda vertical -->
+                  <!-- Panel General: Etiquetas y Leyenda con conteos -->
                   <div
-                    class="flex flex-col gap-6 w-full md:w-56 lg:w-64 shrink-0"
+                    id="mapGeneralPanel"
+                    class="flex flex-col gap-5 w-full transition-all"
                   >
-                    <div class="flex flex-col gap-1.5 w-full" data-report-exclude>
-                      <span
-                        class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider"
-                        >ETIQUETAS</span
-                      >
+                    <!-- Segmented Pills para Etiquetas -->
+                    <div
+                      class="flex flex-col gap-1.5 w-full"
+                      data-report-exclude
+                    >
+                      <div class="flex items-center justify-between">
+                        <span
+                          class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider"
+                          >ETIQUETAS</span
+                        >
+                      </div>
                       <div
-                        class="flex flex-col gap-1 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg border border-slate-300 dark:border-slate-600/60"
+                        class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg border border-slate-300/80 dark:border-slate-600/60"
                         role="group"
                         aria-label="Modo de etiquetas del mapa"
                       >
                         <button
                           id="mapTagModeNone"
                           type="button"
-                          class="w-full text-left px-3 py-2 rounded-md text-xs font-semibold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 shadow-xs transition-all touch-manipulation flex items-center justify-between"
+                          class="px-2 py-1.5 rounded-md text-xs font-semibold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 shadow-xs transition-all touch-manipulation text-center cursor-pointer"
                         >
-                          <span>Sin tags</span>
+                          Off
                         </button>
                         <button
                           id="mapTagModePct"
                           type="button"
-                          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-all touch-manipulation flex items-center justify-between"
+                          class="px-2 py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-all touch-manipulation text-center cursor-pointer"
                         >
-                          <span>% Operatividad</span>
+                          % Op.
                         </button>
                         <button
                           id="mapTagModeVeh"
                           type="button"
-                          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-all touch-manipulation flex items-center justify-between"
+                          class="px-2 py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-all touch-manipulation text-center cursor-pointer"
                         >
-                          <span>Vehículos</span>
+                          Unidades
                         </button>
                       </div>
                     </div>
 
+                    <!-- Leyenda Dinámica -->
                     <div
                       class="flex flex-col gap-2.5 pt-4 border-t border-slate-200 dark:border-slate-700/60 w-full"
                     >
-                      <span
-                        class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider"
-                        >LEYENDA</span
-                      >
+                      <div class="flex items-center justify-between">
+                        <span
+                          class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider"
+                          >LEYENDA</span
+                        >
+                        <span
+                          id="mapLegendCoverageCount"
+                          class="text-[10px] font-medium text-slate-400 dark:text-slate-500"
+                          >24 entidades</span
+                        >
+                      </div>
                       <div
                         id="mapLegend"
-                        class="flex flex-col gap-2 text-xs font-medium text-slate-600 dark:text-slate-300"
+                        class="flex flex-col gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300"
                       >
+                        <!-- Fila Alta -->
                         <div
-                          class="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                          id="mapLegendTierHigh"
+                          class="group flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 transition-all cursor-pointer"
+                          title="Filtrar visualmente entidades con alta operatividad"
                         >
                           <span class="inline-flex items-center gap-2">
                             <span
-                              class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 shadow-2xs"
+                              class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 shadow-2xs group-hover:scale-110 transition-transform"
                             ></span>
                             <span
                               class="font-medium text-slate-700 dark:text-slate-200"
                               >&ge;80%</span
                             >
+                            <span
+                              class="text-[11px] text-slate-400 dark:text-slate-500 font-normal"
+                              >Alta</span
+                            >
                           </span>
                           <span
-                            class="text-[11px] text-slate-400 dark:text-slate-400 font-normal"
-                            >Alta</span
+                            id="mapLegendHighCount"
+                            class="text-[11px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/60 dark:border-emerald-800/60"
+                            >0</span
                           >
                         </div>
+                        <!-- Fila Media -->
                         <div
-                          class="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                          id="mapLegendTierMid"
+                          class="group flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-amber-50/70 dark:hover:bg-amber-950/30 transition-all cursor-pointer"
+                          title="Filtrar visualmente entidades con operatividad media"
                         >
                           <span class="inline-flex items-center gap-2">
                             <span
-                              class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 shadow-2xs"
+                              class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 shadow-2xs group-hover:scale-110 transition-transform"
                             ></span>
                             <span
                               class="font-medium text-slate-700 dark:text-slate-200"
                               >50–79%</span
                             >
+                            <span
+                              class="text-[11px] text-slate-400 dark:text-slate-500 font-normal"
+                              >Media</span
+                            >
                           </span>
                           <span
-                            class="text-[11px] text-slate-400 dark:text-slate-400 font-normal"
-                            >Media</span
+                            id="mapLegendMidCount"
+                            class="text-[11px] font-mono font-semibold text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 border border-amber-200/60 dark:border-amber-800/60"
+                            >0</span
                           >
                         </div>
+                        <!-- Fila Baja -->
                         <div
-                          class="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                          id="mapLegendTierLow"
+                          class="group flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-red-50/70 dark:hover:bg-red-950/30 transition-all cursor-pointer"
+                          title="Filtrar visualmente entidades con baja operatividad"
                         >
                           <span class="inline-flex items-center gap-2">
                             <span
-                              class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0 shadow-2xs"
+                              class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0 shadow-2xs group-hover:scale-110 transition-transform"
                             ></span>
                             <span
                               class="font-medium text-slate-700 dark:text-slate-200"
                               >&lt;50%</span
                             >
+                            <span
+                              class="text-[11px] text-slate-400 dark:text-slate-500 font-normal"
+                              >Baja</span
+                            >
                           </span>
                           <span
-                            class="text-[11px] text-slate-400 dark:text-slate-400 font-normal"
-                            >Baja</span
+                            id="mapLegendLowCount"
+                            class="text-[11px] font-mono font-semibold text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/50 border border-red-200/60 dark:border-red-800/60"
+                            >0</span
                           >
                         </div>
+                        <!-- Fila Sin Datos -->
                         <div
-                          class="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                          id="mapLegendTierNoData"
+                          class="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all"
                         >
                           <span class="inline-flex items-center gap-2">
                             <span
@@ -981,112 +1092,319 @@
                             >
                           </span>
                           <span
-                            class="text-[11px] text-slate-400 dark:text-slate-500 font-normal"
-                            >—</span
+                            id="mapLegendNoDataCount"
+                            class="text-[11px] font-mono font-semibold text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                            >0</span
                           >
                         </div>
                       </div>
                     </div>
+
+                    <!-- Indicador de Interacción -->
+                    <div
+                      class="mt-2 p-2.5 rounded-md bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/60 text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2"
+                      data-report-exclude
+                    >
+                      <svg
+                        class="w-3.5 h-3.5 text-sky-500 shrink-0 mt-0.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span
+                        >Haz clic en un estado para fijar su diagnóstico en este
+                        panel sin salir del mapa.</span
+                      >
+                    </div>
                   </div>
 
-                  <!-- Columna derecha: Mapa -->
+                  <!-- Panel de Inspección de Estado (Visible al hacer clic en un estado) -->
                   <div
-                    class="flex-1 min-w-0 flex items-center justify-center p-2 sm:p-4"
+                    id="mapInspectorPanel"
+                    class="hidden flex-col gap-3.5 w-full bg-slate-50/70 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-700/70 transition-all animate-map-fade-in"
+                  >
+                    <!-- Header del Inspector: Nombre del Estado + Botón Cerrar -->
+                    <div
+                      class="flex items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-slate-700/60"
+                    >
+                      <div class="min-w-0">
+                        <span
+                          class="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider block"
+                          >ENTIDAD SELECCIONADA</span
+                        >
+                        <h4
+                          id="mapInspectorStateName"
+                          class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate uppercase"
+                        >
+                          ZULIA
+                        </h4>
+                      </div>
+                      <button
+                        id="mapInspectorCloseBtn"
+                        type="button"
+                        class="inline-flex items-center justify-center p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        title="Cerrar ficha y volver a leyenda"
+                        aria-label="Cerrar ficha"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <!-- Bloque de Operatividad -->
+                    <div>
+                      <div class="flex items-baseline justify-between mb-1.5">
+                        <span
+                          id="mapInspectorPct"
+                          class="text-2xl font-mono font-bold text-emerald-600 dark:text-emerald-400"
+                          >82.5%</span
+                        >
+                        <span
+                          id="mapInspectorBadge"
+                          class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800"
+                          >Alta</span
+                        >
+                      </div>
+                      <div
+                        class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden"
+                      >
+                        <div
+                          id="mapInspectorBar"
+                          class="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                          style="width: 82.5%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <!-- Grid de Métricas (2x2) -->
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                      <div
+                        class="p-2 rounded bg-white dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/60"
+                      >
+                        <span
+                          class="text-[10px] text-slate-400 block font-medium"
+                          >Operativas</span
+                        >
+                        <span
+                          id="mapInspectorOpCount"
+                          class="text-xs font-mono font-bold text-slate-800 dark:text-slate-100"
+                          >45 unidades</span
+                        >
+                      </div>
+                      <div
+                        class="p-2 rounded bg-white dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/60"
+                      >
+                        <span
+                          class="text-[10px] text-slate-400 block font-medium"
+                          >Inoperativas</span
+                        >
+                        <span
+                          id="mapInspectorInopCount"
+                          class="text-xs font-mono font-bold text-slate-800 dark:text-slate-100"
+                          >8 unidades</span
+                        >
+                      </div>
+                      <div
+                        class="p-2 rounded bg-white dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/60"
+                      >
+                        <span
+                          class="text-[10px] text-slate-400 block font-medium"
+                          >Total flota</span
+                        >
+                        <span
+                          id="mapInspectorTotalCount"
+                          class="text-xs font-mono font-bold text-slate-800 dark:text-slate-100"
+                          >53 unidades</span
+                        >
+                      </div>
+                      <div
+                        class="p-2 rounded bg-white dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/60"
+                      >
+                        <span
+                          class="text-[10px] text-slate-400 block font-medium"
+                          >Posición</span
+                        >
+                        <span
+                          id="mapInspectorRank"
+                          class="text-xs font-mono font-bold text-sky-600 dark:text-sky-400"
+                          >#2 de 24</span
+                        >
+                      </div>
+                    </div>
+
+                    <!-- Cuota Nacional -->
+                    <div
+                      class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-700/60"
+                    >
+                      <span>Participación país:</span>
+                      <strong
+                        id="mapInspectorShare"
+                        class="font-mono text-slate-700 dark:text-slate-300"
+                        >14.8%</strong
+                      >
+                    </div>
+
+                    <!-- Botón opcional: Filtrar todo el tablero por esta entidad -->
+                    <div class="pt-1" data-report-exclude>
+                      <button
+                        id="mapInspectorFilterBtn"
+                        type="button"
+                        class="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-300 dark:hover:bg-sky-950/40 dark:hover:text-sky-300 dark:hover:border-sky-800 shadow-2xs transition-all cursor-pointer"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5 text-sky-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                          />
+                        </svg>
+                        <span id="mapInspectorFilterBtnText"
+                          >Filtrar tablero por este estado</span
+                        >
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Columna derecha: Mapa -->
+                <div
+                  class="flex-1 min-w-0 flex items-center justify-center p-2 sm:p-4"
+                >
+                  <div
+                    id="mapVzWrapper"
+                    class="relative w-full max-w-lg lg:max-w-xl xl:max-w-2xl min-w-0 mx-auto"
                   >
                     <div
-                      id="mapVzWrapper"
-                      class="relative w-full max-w-lg lg:max-w-xl xl:max-w-2xl min-w-0 mx-auto"
-                    >
-                      <div
-                        id="mapVzBox"
-                        class="w-full"
-                        aria-label="Mapa de Venezuela con operatividad por estado"
-                        role="img"
-                      ></div>
-                      <div
-                        id="mapTooltip"
-                        data-report-exclude
-                        class="hidden absolute z-20 pointer-events-none rounded-md border border-slate-300 bg-white px-3 py-2 shadow-md min-w-[150px] dark:border-slate-700 dark:bg-slate-900"
-                      ></div>
-                    </div>
+                      id="mapVzBox"
+                      class="w-full"
+                      aria-label="Mapa de Venezuela con operatividad por estado"
+                      role="img"
+                    ></div>
+                    <div
+                      id="mapTooltip"
+                      data-report-exclude
+                      class="hidden absolute z-20 pointer-events-none rounded-lg border border-slate-200/90 bg-white/95 backdrop-blur-md px-3.5 py-2.5 shadow-xl min-w-[170px] dark:border-slate-700/80 dark:bg-slate-900/95 transition-opacity"
+                    ></div>
                   </div>
                 </div>
-              </div>
-
-              <!-- Vista de Enfoque y Diagnóstico Estadal -->
-              <div
-                id="stateFocusBody"
-                class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch"
-              >
-                <div class="lg:col-span-8 flex flex-col justify-between">
-                  <div>
-                    <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700/60">
-                      <div class="flex items-center gap-1 p-0.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/80 border border-slate-300/80 dark:border-slate-700" role="tablist" aria-label="Criterio de composición">
-                        <button
-                          id="stateTabTipoBtn"
-                          type="button"
-                          role="tab"
-                          aria-selected="true"
-                          class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all text-slate-900 bg-white shadow-xs dark:bg-slate-700 dark:text-slate-100 cursor-pointer"
-                        >
-                          Denominación / Tipo
-                        </button>
-                        <button
-                          id="stateTabModeloBtn"
-                          type="button"
-                          role="tab"
-                          aria-selected="false"
-                          class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
-                        >
-                          Marca / Modelo
-                        </button>
-                      </div>
-                      <span id="stateModelsTotalBadge" class="text-[11px] font-medium text-slate-500 dark:text-slate-400"></span>
-                    </div>
-                    <div id="stateTopModelsList" class="space-y-3"></div>
-                  </div>
-                </div>
-
-                <div
-                  class="lg:col-span-4 flex flex-col border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-700/60 pt-4 lg:pt-0 lg:pl-5"
-                >
-                  <span
-                    class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider block mb-2"
-                  >
-                    Localización Territorial
-                  </span>
-                  <div id="stateMiniMapWrapper" class="relative w-full max-w-[240px] sm:max-w-[260px] mx-auto py-2 my-auto">
-                    <div id="stateMiniMapBox" class="w-full" aria-label="Mini mapa de localización estadal" role="img"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                id="mapEmpty"
-                class="hidden py-12 text-center text-sm text-slate-400 dark:text-slate-500"
-              >
-                <svg
-                  class="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
-                  />
-                </svg>
-                No se detectaron estados de Venezuela en los datos cargados.
               </div>
             </div>
+
+            <!-- Vista de Enfoque y Diagnóstico Estadal -->
+            <div
+              id="stateFocusBody"
+              class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch"
+            >
+              <div class="lg:col-span-8 flex flex-col justify-between">
+                <div>
+                  <div
+                    class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700/60"
+                  >
+                    <div
+                      class="flex items-center gap-1 p-0.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/80 border border-slate-300/80 dark:border-slate-700"
+                      role="tablist"
+                      aria-label="Criterio de composición"
+                    >
+                      <button
+                        id="stateTabTipoBtn"
+                        type="button"
+                        role="tab"
+                        aria-selected="true"
+                        class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all text-slate-900 bg-white shadow-xs dark:bg-slate-700 dark:text-slate-100 cursor-pointer"
+                      >
+                        Denominación / Tipo
+                      </button>
+                      <button
+                        id="stateTabModeloBtn"
+                        type="button"
+                        role="tab"
+                        aria-selected="false"
+                        class="px-2.5 py-1 text-xs font-semibold rounded-md transition-all text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
+                      >
+                        Marca / Modelo
+                      </button>
+                    </div>
+                    <span
+                      id="stateModelsTotalBadge"
+                      class="text-[11px] font-medium text-slate-500 dark:text-slate-400"
+                    ></span>
+                  </div>
+                  <div id="stateTopModelsList" class="space-y-3"></div>
+                </div>
+              </div>
+
+              <div
+                class="lg:col-span-4 flex flex-col border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-700/60 pt-4 lg:pt-0 lg:pl-5"
+              >
+                <span
+                  class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider block mb-2"
+                >
+                  Localización Territorial
+                </span>
+                <div
+                  id="stateMiniMapWrapper"
+                  class="relative w-full max-w-[240px] sm:max-w-[260px] mx-auto py-2 my-auto"
+                >
+                  <div
+                    id="stateMiniMapBox"
+                    class="w-full"
+                    aria-label="Mini mapa de localización estadal"
+                    role="img"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              id="mapEmpty"
+              class="hidden py-12 text-center text-sm text-slate-400 dark:text-slate-500"
+            >
+              <svg
+                class="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                />
+              </svg>
+              No se detectaron estados de Venezuela en los datos cargados.
+            </div>
+          </div>
         </div>
       </section>
     </main>
