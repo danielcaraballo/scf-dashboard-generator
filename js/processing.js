@@ -24,6 +24,7 @@ window.FleetProcessing = {
     let nonEmpCount = 0;
 
     for (const row of rows) {
+      if (!row) continue;
       const val = row[statusCol];
       if (val === undefined || val === null || String(val).trim() === '') continue;
       nonEmpCount++;
@@ -55,6 +56,10 @@ window.FleetProcessing = {
     let invalid = 0;
 
     for (const row of rows) {
+      if (!row) {
+        invalid++;
+        continue;
+      }
       const semantic = statusCol ? FleetConfig.toSemantic(row[statusCol]) : null;
       if (semantic === null) {
         invalid++;
@@ -103,6 +108,7 @@ window.FleetProcessing = {
     let modeloExtractor = null;
     if (cols.marca || cols.modelo) {
       modeloExtractor = (row) => {
+        if (!row) return '';
         const brand = cols.marca ? FleetConfig.normalize(row[cols.marca]) : '';
         const model = cols.modelo ? FleetConfig.normalize(row[cols.modelo]) : '';
         if (brand && model) {
