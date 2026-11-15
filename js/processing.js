@@ -152,7 +152,6 @@ window.FleetProcessing = {
       },
       stats,
       counts,
-      geo: null,
       fuel: fuelData,
       modelo: modeloData,
       clase: claseData,

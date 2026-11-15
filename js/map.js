@@ -293,6 +293,18 @@ window.FleetMap = (function () {
       const name = FleetConfig.resolveStateName(path.getAttribute('data-canon') || path.getAttribute('title'));
       const d = name ? cachedDataMap[name] : null;
       if (!d) {
+        if (tier === 'nodata') {
+          path.classList.add('is-tier-hovered');
+          path.classList.remove('is-dimmed');
+          if (path.parentNode) path.parentNode.appendChild(path);
+        } else {
+          path.classList.remove('is-tier-hovered');
+          path.classList.add('is-dimmed');
+        }
+        return;
+      }
+      if (tier === 'nodata') {
+        path.classList.remove('is-tier-hovered');
         path.classList.add('is-dimmed');
         return;
       }
@@ -311,6 +323,17 @@ window.FleetMap = (function () {
       const name = FleetConfig.resolveStateName(badge.getAttribute('data-canon'));
       const d = name ? cachedDataMap[name] : null;
       if (!d) {
+        if (tier === 'nodata') {
+          badge.classList.add('is-tier-hovered');
+          badge.classList.remove('is-dimmed');
+        } else {
+          badge.classList.remove('is-tier-hovered');
+          badge.classList.add('is-dimmed');
+        }
+        return;
+      }
+      if (tier === 'nodata') {
+        badge.classList.remove('is-tier-hovered');
         badge.classList.add('is-dimmed');
         return;
       }
@@ -530,6 +553,7 @@ window.FleetMap = (function () {
     const tierHigh = byId('mapLegendTierHigh');
     const tierMid = byId('mapLegendTierMid');
     const tierLow = byId('mapLegendTierLow');
+    const tierNoData = byId('mapLegendTierNoData');
 
     if (tierHigh) {
       tierHigh.onmouseenter = () => highlightTier('high');
@@ -542,6 +566,10 @@ window.FleetMap = (function () {
     if (tierLow) {
       tierLow.onmouseenter = () => highlightTier('low');
       tierLow.onmouseleave = clearTierHighlight;
+    }
+    if (tierNoData) {
+      tierNoData.onmouseenter = () => highlightTier('nodata');
+      tierNoData.onmouseleave = clearTierHighlight;
     }
 
     const wrapper = byId('mapVzWrapper');

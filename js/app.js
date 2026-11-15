@@ -30,8 +30,6 @@
 
     const currentFullPorEstado = FleetProcessing.operatividadPorEstado(baseRows, currentCols);
 
-    const isStateMode = Boolean(isSingleStateFile);
-
     let targetStateName = "";
     if (currentStateFilter) {
       targetStateName = FleetConfig.resolveStateName(currentStateFilter) || currentStateFilter;
@@ -79,7 +77,6 @@
       nationalRate: currentNationalRate,
       nationalTotal: currentNationalTotal,
       isSingleStateFile,
-      isStateMode,
       targetStateName
     });
   }

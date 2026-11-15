@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SCF · Tablero de Control de Flota</title>
+    <title>Generador de Tableros · Control de Flota</title>
     <meta
       name="description"
       content="Generador de tableros de control de flota vehicular. Transforma tus datos CSV en gráficos de operatividad, métricas ejecutivas y reportes PDF al instante."
@@ -216,27 +216,44 @@
       <div
         class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4"
       >
-        <div class="flex-1 min-w-0">
-          <h1
-            class="text-base sm:text-lg font-semibold text-slate-900 leading-snug truncate dark:text-slate-100"
+        <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+          <a
+            id="homeLogoLink"
+            href="index.html"
+            class="shrink-0 transition-transform active:scale-95 hover:opacity-90 rounded-md inline-flex"
+            title="Ir a la página de inicio"
+            aria-label="Ir a la página de inicio"
           >
-            Generador de Tableros &middot; Control de Flota
-          </h1>
-          <p
-            id="dragHint"
-            class="hidden text-xs text-slate-500 truncate mt-0.5 leading-none dark:text-slate-400"
-          >
-            Archivo cargado:
-            <span
-              id="fileName"
-              class="font-medium text-slate-700 dark:text-slate-200"
-              >—</span
+            <img
+              src="favicon.svg"
+              alt="Logo SCF"
+              class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 select-none rounded-md"
+              width="36"
+              height="36"
+            />
+          </a>
+          <div class="min-w-0 flex-1">
+            <h1
+              class="text-base sm:text-lg font-semibold text-slate-900 leading-snug truncate dark:text-slate-100"
             >
-            <span
-              id="fileSize"
-              class="text-slate-400 dark:text-slate-500"
-            ></span>
-          </p>
+              Generador de Tableros &middot; Control de Flota
+            </h1>
+            <p
+              id="dragHint"
+              class="hidden text-xs text-slate-500 truncate mt-0.5 leading-none dark:text-slate-400"
+            >
+              Archivo cargado:
+              <span
+                id="fileName"
+                class="font-medium text-slate-700 dark:text-slate-200"
+                >—</span
+              >
+              <span
+                id="fileSize"
+                class="text-slate-400 dark:text-slate-500"
+              ></span>
+            </p>
+          </div>
         </div>
 
         <div
@@ -1081,11 +1098,12 @@
                         <!-- Fila Sin Datos -->
                         <div
                           id="mapLegendTierNoData"
-                          class="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all"
+                          class="group flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-slate-100/70 dark:hover:bg-slate-700/30 transition-all cursor-pointer"
+                          title="Filtrar visualmente entidades sin datos registrados"
                         >
                           <span class="inline-flex items-center gap-2">
                             <span
-                              class="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0 shadow-2xs"
+                              class="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0 shadow-2xs group-hover:scale-110 transition-transform"
                             ></span>
                             <span class="text-slate-500 dark:text-slate-400"
                               >Sin datos</span
