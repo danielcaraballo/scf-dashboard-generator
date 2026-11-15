@@ -71,21 +71,26 @@ window.FleetExport = (function () {
     return true;
   }
 
-  function copyCanvases(source, target) {
-    const sourceCanvases = source.querySelectorAll('canvas');
-    const targetCanvases = target.querySelectorAll('canvas');
-
-    sourceCanvases.forEach((srcCanvas, i) => {
-      const destCanvas = targetCanvases[i];
-      if (destCanvas && srcCanvas.width > 0 && srcCanvas.height > 0) {
-        destCanvas.width = srcCanvas.width;
-        destCanvas.height = srcCanvas.height;
-        const ctx = destCanvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(srcCanvas, 0, 0);
+  function prefetchFonts() {
+    if (typeof window === 'undefined' || !window.fetch) return;
+    const run = () => {
+      PDF_FONT_SOURCES.forEach(async (f) => {
+        if (pdfFontBase64Cache.has(f.url)) return;
+        try {
+          const res = await fetch(f.url);
+          if (res.ok) {
+            const base64 = await blobToBase64(await res.blob());
+            pdfFontBase64Cache.set(f.url, base64);
+          }
+        } catch (e) {
         }
-      }
-    });
+      });
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(run, { timeout: 3000 });
+    } else {
+      setTimeout(run, 1500);
+    }
   }
 
   async function captureElement(element) {
@@ -113,10 +118,15 @@ window.FleetExport = (function () {
           doc.documentElement.classList.remove('dark');
         }
         doc.querySelectorAll('.vz-state').forEach((p) => {
+          if (p.getAttribute('data-mini-target') === 'true') {
+            p.setAttribute('stroke', '#0EA5E9');
+            p.setAttribute('stroke-width', '2.2');
+            return;
+          }
           p.classList.remove('active-state', 'is-hovered', 'is-dimmed');
-          p.setAttribute('stroke', '#FFFFFF');
+          p.setAttribute('stroke', '#CBD5E1');
           if (!p.getAttribute('fill') || p.getAttribute('fill').toUpperCase() === '#334155') {
-            p.setAttribute('fill', '#E2E8F0');
+            p.setAttribute('fill', '#CBD5E1');
           }
         });
         doc.querySelectorAll('.state-badge').forEach((b) => {
@@ -153,86 +163,6 @@ window.FleetExport = (function () {
     });
   }
 
-  async function exportPNG() {
-    const btn = document.getElementById('imageBtn');
-    const originalLabel = btn.innerHTML;
-
-    btn.disabled = true;
-    btn.innerHTML = 'Generando PNG…';
-
-    let wrapper = null;
-    try {
-      const reportArea = document.getElementById('reportArea');
-      const lr = window.FleetUI && window.FleetUI.getLastResult ? window.FleetUI.getLastResult() : null;
-      const analysis = lr ? lr.analysis : null;
-      const { dateStr, filterSubtitle } = getMetadata();
-      const escapeHtml = (window.FleetConfig && window.FleetConfig.escapeHtml) || ((s) => String(s ?? ''));
-      const safeFilterSub = escapeHtml(filterSubtitle);
-
-      wrapper = document.createElement('div');
-      wrapper.id = 'pngExportWrapper';
-      wrapper.style.cssText = `
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        width: 1280px;
-        background-color: #FFFFFF;
-        padding: 32px;
-        box-sizing: border-box;
-        font-family: 'Poppins', sans-serif;
-        color: #0F172A;
-      `;
-
-      const clonedContent = reportArea.cloneNode(true);
-      clonedContent.querySelectorAll('[data-report-exclude]').forEach((el) => el.remove());
-      clonedContent.classList.remove('hidden');
-      clonedContent.style.display = 'block';
-
-      wrapper.innerHTML = `
-        <div style="margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid #0EA5E9; display: flex; align-items: flex-end; justify-content: space-between;">
-          <div>
-            <h1 style="font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 700; color: #0F172A; margin: 0; line-height: 1.2;">Tablero de Control de Flota</h1>
-            ${safeFilterSub ? `<p style="font-size: 13px; color: #0EA5E9; font-weight: 600; margin: 6px 0 0 0;">${safeFilterSub}</p>` : ''}
-          </div>
-          <div style="text-align: right;">
-            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8; display: block; margin-bottom: 2px;">Fecha de Emisión</span>
-            <span style="font-size: 13px; font-weight: 600; color: #334155;">${dateStr}</span>
-          </div>
-        </div>
-        <div id="pngReportBody" class="space-y-5">
-        </div>
-      `;
-
-      const bodyContainer = wrapper.querySelector('#pngReportBody');
-      bodyContainer.appendChild(clonedContent);
-
-      document.body.appendChild(wrapper);
-      if (window.FleetCharts && window.FleetCharts.renderLightChartsIn) {
-        window.FleetCharts.renderLightChartsIn(wrapper, analysis);
-      }
-
-      await new Promise((r) => setTimeout(r, 150));
-
-      const canvas = await captureElement(wrapper);
-      const link = document.createElement('a');
-      link.download = `Reporte_Flota_${dateStamp()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch (err) {
-      console.error('Error al exportar PNG:', err);
-      if (window.FleetUI) FleetUI.showError('No se pudo generar la imagen. Inténtalo de nuevo.');
-    } finally {
-      if (wrapper && wrapper.parentNode) {
-        wrapper.parentNode.removeChild(wrapper);
-      }
-      if (window.FleetCharts && window.FleetCharts.destroyExportCharts) {
-        window.FleetCharts.destroyExportCharts();
-      }
-      btn.disabled = false;
-      btn.innerHTML = originalLabel;
-    }
-  }
-
   async function exportPDF() {
     const btn = document.getElementById('exportBtn');
     const originalLabel = btn.innerHTML;
@@ -242,14 +172,9 @@ window.FleetExport = (function () {
 
     let sectionWrappers = [];
     try {
-      const sections = Array.from(
-        document.querySelectorAll('#reportArea [data-report-section]')
-      ).filter(
-        (el) =>
-          !el.hasAttribute('data-report-exclude') && el.offsetParent !== null
-      );
       const lr = window.FleetUI && window.FleetUI.getLastResult ? window.FleetUI.getLastResult() : null;
       const analysis = lr ? lr.analysis : null;
+      const isStateMode = Boolean(lr && lr.isStateMode);
       const { dateStr, filterSubtitle } = getMetadata();
 
       const pdf = new jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
@@ -269,9 +194,15 @@ window.FleetExport = (function () {
       const headerH = 18;
       const footerH = 8;
 
+      const sectionsToCapture = Array.from(
+        document.querySelectorAll('#reportArea [data-report-section]')
+      ).filter(
+        (el) => !el.hasAttribute('data-report-exclude') && el.offsetParent !== null
+      ).map((el) => ({ type: 'single', el }));
+
       const capturedSections = [];
 
-      for (const section of sections) {
+      for (const item of sectionsToCapture) {
         const wrap = document.createElement('div');
         wrap.style.cssText = `
           position: absolute;
@@ -279,14 +210,15 @@ window.FleetExport = (function () {
           top: 0;
           width: 1280px;
           background-color: #FFFFFF;
-          padding: 32px;
+          padding: 24px 32px;
           box-sizing: border-box;
           font-family: 'Poppins', sans-serif;
         `;
 
-        const cloned = section.cloneNode(true);
-        cloned.querySelectorAll('[data-report-exclude]').forEach((el) => el.remove());
+        const cloned = item.el.cloneNode(true);
+        cloned.querySelectorAll('[data-report-exclude]').forEach((e) => e.remove());
         wrap.appendChild(cloned);
+
         document.body.appendChild(wrap);
         if (window.FleetCharts && window.FleetCharts.renderLightChartsIn) {
           window.FleetCharts.renderLightChartsIn(wrap, analysis);
@@ -346,18 +278,27 @@ window.FleetExport = (function () {
 
       for (let i = 0; i < capturedSections.length; i++) {
         const s = capturedSections[i];
-        if (cursorY + s.imgH > pdfH - marginY - footerH && cursorY > marginY + headerH) {
+        if (i > 0) {
           pdf.addPage();
           drawHeader();
           cursorY = marginY + headerH;
-        }
-
-        if (i === 0 && pdf.getNumberOfPages() === 1) {
+        } else if (pdf.getNumberOfPages() === 1) {
           drawHeader();
         }
 
-        pdf.addImage(s.imgData, 'JPEG', marginX, cursorY, contentW, s.imgH);
-        cursorY += s.imgH + 4;
+        let drawH = s.imgH;
+        let drawW = contentW;
+        let drawX = marginX;
+        const maxAvailH = pdfH - marginY - footerH - cursorY;
+        if (drawH > maxAvailH) {
+          const scale = maxAvailH / drawH;
+          drawH = maxAvailH;
+          drawW = contentW * scale;
+          drawX = marginX + (contentW - drawW) / 2;
+        }
+
+        pdf.addImage(s.imgData, 'JPEG', drawX, cursorY, drawW, drawH);
+        cursorY += drawH + 4;
       }
 
       const totalPages = pdf.getNumberOfPages();
@@ -393,13 +334,14 @@ window.FleetExport = (function () {
     }
   }
 
+  prefetchFonts();
+
   return {
     dateStamp,
     getMetadata,
     ensurePdfFonts,
-    copyCanvases,
+    prefetchFonts,
     captureElement,
-    exportPNG,
     exportPDF
   };
 })();

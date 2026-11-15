@@ -1,6 +1,6 @@
 ![Banner Tablero de Control de Flota](assets/banner.png)
 
-# SCF · Tablero de Control de Flota · Dashboard Generator
+# SCF · Generador de Tableros · Control de Flota
 
 Generador de tableros de control y analítica visual de flota vehicular **100% Client-Side**. Diseñado para procesar exportaciones CSV y planillas Excel (`.xlsx`, `.xls`) de gran volumen (hasta 30 MB / +10 000 registros) directamente en el navegador sin enviar datos a servidores externos.
 
@@ -8,14 +8,14 @@ Generador de tableros de control y analítica visual de flota vehicular **100% C
 
 ## 🚀 Características Principales
 
-- **🔒 Privacidad y Procesamiento Client-Side:** Carga y analiza datos localmente en formato CSV o Excel (`.xlsx`, `.xls`) usando PapaParse en Web Workers y SheetJS. Ninguna información sensible sale de tu dispositivo.
-- **⚡ Alto Rendimiento con Grandes Volúmenes:** Capaz de procesar miles de filas en milisegundos sin congelar la interfaz de usuario.
-- **🧠 Detección Inteligente de Columnas:** Mapeo automático de campos (estatus, ubicación/estado, marca, modelo, clase, GPS, combustible, etc.) mediante coincidencia exacta y heurística de substrings.
-- **📊 Semántica Operativa y Colores:** Clasificación estandarizada en 8 categorías operativas (Operativo, En Reparación, Inoperativo, Por Desincorporar, Desincorporado, Por Ubicar, Hurtado, Otros Entes) con semáforos visuales (Verde ≥80%, Amarillo ≥50%, Rojo <50%).
-- **🗺️ Filtros por Estado / Región:** Filtrado dinámico por estado geográfico con selección interactiva y autodetección cuando la flota pertenece a una sola entidad.
-- **📈 Visualización Interactiva:** Gráficos de dona y barras horizontales construidos con Chart.js.
-- **📋 Métricas Ejecutivas e Indicadores de Completitud:** Tarjetas KPI de resumen, rendimiento por región/estado y nivel de completitud de datos (Identificación Técnica, Ubicación y Estatus).
-- **📄 Exportación a PDF y PNG:** Generación de reportes PDF A4 Landscape multipágina por secciones con encabezado corporativo, numeración dinámica (`Página X de Y`) y fuentes incrustadas mediante `html2canvas-pro` y `jsPDF`.
+- **Privacidad y Procesamiento Client-Side:** Carga y analiza datos localmente en formato CSV o Excel (`.xlsx`, `.xls`) usando PapaParse en Web Workers y SheetJS. Ninguna información sensible sale de tu dispositivo.
+- **Alto Rendimiento con Grandes Volúmenes:** Capaz de procesar miles de filas en milisegundos sin congelar la interfaz de usuario.
+- **Detección Inteligente de Columnas:** Mapeo automático de campos (estatus, ubicación/estado, marca, modelo, clase, GPS, combustible, etc.) mediante coincidencia exacta y heurística de substrings.
+- **Semántica Operativa y Colores:** Clasificación estandarizada en 8 categorías operativas (Operativo, En Reparación, Inoperativo, Por Desincorporar, Desincorporado, Por Ubicar, Hurtado, Otros Entes) con semáforos visuales (Verde ≥80%, Amarillo ≥50%, Rojo <50%).
+- **Filtros por Estado / Región:** Filtrado dinámico por estado geográfico con selección interactiva y autodetección cuando la flota pertenece a una sola entidad.
+- **Visualización Interactiva:** Gráficos de dona y barras horizontales construidos con Chart.js.
+- **Métricas Ejecutivas y Tarjetas KPI:** Tarjetas KPI de resumen operativo, rendimiento por región/estado, cobertura GPS y comparativas contextuales.
+- **Exportación a PDF:** Generación de reportes PDF Letter Landscape multipágina por secciones con encabezado corporativo, numeración dinámica (`Página X de Y`) y fuentes incrustadas mediante `html2canvas-pro` y `jsPDF`.
 
 ---
 
@@ -28,7 +28,7 @@ Generador de tableros de control y analítica visual de flota vehicular **100% C
 | **PapaParse**                  | Parser CSV multihilo (`worker: true`).                               |
 | **SheetJS (XLSX)**             | Parser client-side para archivos Excel (`.xlsx`, `.xls`).            |
 | **Chart.js**                   | Gráficos interactivos de alto rendimiento.                           |
-| **html2canvas-pro + jsPDF**    | Motor de captura e impresión de reportes en PDF/PNG.                 |
+| **html2canvas-pro + jsPDF**    | Motor de captura e impresión de reportes en PDF.                     |
 
 ---
 
@@ -45,7 +45,7 @@ scf-dashboard-generator/
 │   ├── processing.js        # Motor de agregaciones de datos O(n)
 │   ├── charts.js            # Inicialización y gestión de gráficos Chart.js
 │   ├── ui.js                # Renderizado de componentes UI y tarjetas KPI
-│   └── export.js            # Motor de generación de reportes PNG y PDF multipágina
+│   └── export.js            # Motor de generación de reportes PDF multipágina
 ├── template/
 │   ├── flota_template.csv    # CSV de referencia del formato esperado
 │   └── flota_template.xlsx   # Plantilla Excel rellenable

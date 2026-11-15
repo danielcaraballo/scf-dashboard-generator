@@ -2,12 +2,13 @@
   const fileInput = document.getElementById("fileInput");
   const loadBtn = document.getElementById("loadBtn");
   const exportBtn = document.getElementById("exportBtn");
-  const imageBtn = document.getElementById("imageBtn");
   const dropZone = document.getElementById("dropZone");
   const emptyState = document.getElementById("emptyState");
   const stateFilterSelect = document.getElementById("stateFilterSelect");
   const clearFilterBtn = document.getElementById("clearFilterBtn");
   const activeFleetBtn = document.getElementById("activeFleetBtn");
+  const stateTabTipoBtn = document.getElementById("stateTabTipoBtn");
+  const stateTabModeloBtn = document.getElementById("stateTabModeloBtn");
 
   let currentRows = null;
   let currentCols = null;
@@ -28,6 +29,31 @@
     const currentFullPorEstado = FleetProcessing.operatividadPorEstado(baseRows, currentCols);
     const fullAnalysis = FleetProcessing.analyze(baseRows, currentCols);
     const currentNationalRate = fullAnalysis ? fullAnalysis.rate : 0;
+    const currentNationalTotal = fullAnalysis ? fullAnalysis.total : 0;
+
+    let uniqueStatesCount = 0;
+    let singleStateRawName = '';
+    if (currentCols.geo && currentRows && currentRows.length > 0) {
+      const stateSet = new Set();
+      for (const r of currentRows) {
+        const norm = FleetConfig.normalize(r[currentCols.geo]);
+        if (norm) {
+          stateSet.add(norm);
+          if (!singleStateRawName) singleStateRawName = norm;
+        }
+      }
+      uniqueStatesCount = stateSet.size;
+    }
+
+    const isSingleStateFile = uniqueStatesCount === 1;
+    const isStateMode = Boolean(isSingleStateFile || currentStateFilter);
+
+    let targetStateName = '';
+    if (currentStateFilter) {
+      targetStateName = FleetConfig.resolveStateName(currentStateFilter) || currentStateFilter;
+    } else if (isSingleStateFile && singleStateRawName) {
+      targetStateName = FleetConfig.resolveStateName(singleStateRawName) || singleStateRawName;
+    }
 
     let filteredRows = baseRows;
     if (currentStateFilter && currentCols.geo) {
@@ -43,9 +69,14 @@
       activeStateFilter: currentStateFilter,
       activeFleetOnly,
       rawRows: currentRows,
+      baseRows: baseRows,
       cols: currentCols,
       fullPorEstado: currentFullPorEstado,
-      nationalRate: currentNationalRate
+      nationalRate: currentNationalRate,
+      nationalTotal: currentNationalTotal,
+      isSingleStateFile,
+      isStateMode,
+      targetStateName
     });
   }
 
@@ -136,6 +167,18 @@
     });
   }
 
+  if (stateTabTipoBtn) {
+    stateTabTipoBtn.addEventListener("click", () => {
+      FleetUI.setStateTab("tipo");
+    });
+  }
+
+  if (stateTabModeloBtn) {
+    stateTabModeloBtn.addEventListener("click", () => {
+      FleetUI.setStateTab("modelo");
+    });
+  }
+
   if (clearFilterBtn) {
     clearFilterBtn.addEventListener("click", () => {
       currentStateFilter = "";
@@ -185,5 +228,4 @@
   });
 
   if (exportBtn) exportBtn.addEventListener("click", () => FleetExport.exportPDF());
-  if (imageBtn) imageBtn.addEventListener("click", () => FleetExport.exportPNG());
 })();

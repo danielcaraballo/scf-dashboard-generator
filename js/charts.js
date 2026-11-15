@@ -33,6 +33,19 @@ window.FleetCharts = (function () {
     return Array.from({ length: count }, (_, i) => PALETTE[i % PALETTE.length]);
   }
 
+  function fuelColors(items) {
+    let colorIdx = 0;
+    return (items || []).map((item) => {
+      const label = String(item.label || '').toUpperCase();
+      if (label === 'POR IDENTIFICAR' || label === 'SIN CLASIFICAR') {
+        return '#94A3B8';
+      }
+      const c = PALETTE[colorIdx % PALETTE.length];
+      colorIdx++;
+      return c;
+    });
+  }
+
   function pctLabel(item, total) {
     const pct = total ? ((item.count / total) * 100).toFixed(1) : '0.0';
     return `${item.label}: ${item.count.toLocaleString('es-MX')} (${pct}%)`;
@@ -45,6 +58,7 @@ window.FleetCharts = (function () {
     const key = chartKey(idOrEl);
     destroy(key);
     const colors = themeColors(opts.theme);
+    const bgColors = opts.colors || fuelColors(items);
 
     charts[key] = new Chart(ctx, {
       type: 'doughnut',
@@ -52,7 +66,7 @@ window.FleetCharts = (function () {
         labels: items.map((i) => i.label),
         datasets: [{
           data: items.map((i) => i.count),
-          backgroundColor: palette(items.length),
+          backgroundColor: bgColors,
           borderColor: colors.donutBorder,
           borderWidth: 2,
           hoverOffset: 8
@@ -147,106 +161,6 @@ window.FleetCharts = (function () {
     });
   }
 
-  function pctTopPlugin(items, theme) {
-    return {
-      id: 'pctTop',
-      afterDatasetsDraw(chart) {
-        const { ctx, scales } = chart;
-        ctx.save();
-        ctx.font = '600 10px Poppins, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillStyle = themeColors(theme).countText;
-        items.forEach((item, i) => {
-          const px = scales.x.getPixelForValue(i);
-          const py = scales.y.getPixelForValue(item.total);
-          ctx.fillText(`${item.pct.toFixed(0)}%`, px, py - 3);
-        });
-        ctx.restore();
-      }
-    };
-  }
-
-  function renderVBarStacked(idOrEl, items, opts) {
-    opts = opts || {};
-    const ctx = canvasOf(idOrEl);
-    if (!ctx) return;
-    const key = chartKey(idOrEl);
-    destroy(key);
-    const colors = themeColors(opts.theme);
-
-    charts[key] = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: items.map((i) => i.shortLabel || i.label),
-        datasets: [
-          { label: 'Operativos', data: items.map((i) => i.operativos), backgroundColor: '#10B981', borderRadius: 0 },
-          { label: 'No operativos', data: items.map((i) => i.inactivos), backgroundColor: '#EF4444', borderRadius: 4 }
-        ]
-      },
-      plugins: [pctTopPlugin(items, opts.theme)],
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: (t) => {
-                const item = items[t[0].dataIndex];
-                return item ? item.label : t[0].label;
-              },
-              label: (c) => {
-                const item = items[c.dataIndex];
-                if (!item || !item.total) return `${c.dataset.label}: ${c.raw.toLocaleString('es-MX')}`;
-                const pct = (c.raw / item.total) * 100;
-                return `${c.dataset.label}: ${c.raw.toLocaleString('es-MX')} (${pct.toFixed(1)}%)`;
-              },
-              footer: (t) => {
-                const item = items[t[0].dataIndex];
-                if (!item) return '';
-                return `Total: ${item.total.toLocaleString('es-MX')} · ${item.pct.toFixed(1)}% operativos`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            stacked: true,
-            grid: { display: false },
-            ticks: {
-              autoSkip: false,
-              maxRotation: 45,
-              minRotation: 0,
-              font: { size: 8 },
-              color: colors.vbarTick,
-              padding: 2,
-              callback(val) {
-                const label = this.getLabelForValue(val);
-                if (label.length <= 10) return label;
-                const words = label.split(' ');
-                const lines = [];
-                let line = words[0];
-                for (let i = 1; i < words.length; i++) {
-                  if ((line + ' ' + words[i]).length <= 10) line += ' ' + words[i];
-                  else { lines.push(line); line = words[i]; }
-                }
-                lines.push(line);
-                return lines.join('\n');
-              }
-            }
-          },
-          y: {
-            stacked: true,
-            beginAtZero: true,
-            display: false,
-            grace: '10%'
-          }
-        }
-      }
-    });
-  }
-
   function renderLightChartsIn(root, analysis) {
     if (!root || !analysis) return;
     const q = (sel) => root.querySelector(sel);
@@ -277,5 +191,5 @@ window.FleetCharts = (function () {
       .forEach(destroy);
   }
 
-  return { renderDonut, renderHBar, renderVBarStacked, palette, destroyAll, renderLightChartsIn, destroyExportCharts };
+  return { renderDonut, renderHBar, palette, fuelColors, destroyAll, renderLightChartsIn, destroyExportCharts };
 })();

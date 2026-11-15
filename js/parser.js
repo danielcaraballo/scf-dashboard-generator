@@ -17,26 +17,87 @@ window.FleetParser = {
   parseExcel(file, onComplete, onError) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      try {
-        if (typeof XLSX === 'undefined') {
-          throw new Error('La librería para leer archivos Excel (SheetJS) no está disponible.');
-        }
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-          throw new Error('El archivo Excel no contiene hojas de trabajo.');
-        }
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
-        const fields = rows.length > 0 ? Object.keys(rows[0]) : [];
-        onComplete(rows, { fields, sheetName: firstSheetName });
-      } catch (err) {
-        onError(err);
+      const buffer = e.target.result;
+      if (typeof Worker !== 'undefined') {
+        this.parseExcelWithWorker(buffer, onComplete, onError);
+      } else {
+        this.parseExcelSync(buffer, onComplete, onError);
       }
     };
     reader.onerror = (err) => onError(err || new Error('Error al leer el archivo de Excel.'));
     reader.readAsArrayBuffer(file);
+  },
+
+  parseExcelWithWorker(arrayBuffer, onComplete, onError) {
+    let worker = null;
+    let blobUrl = null;
+    try {
+      const workerCode = `
+        self.onmessage = function(e) {
+          try {
+            importScripts('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+            const data = new Uint8Array(e.data);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+              throw new Error('El archivo Excel no contiene hojas de trabajo.');
+            }
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
+            const fields = rows.length > 0 ? Object.keys(rows[0]) : [];
+            self.postMessage({ success: true, rows: rows, meta: { fields: fields, sheetName: firstSheetName } });
+          } catch (err) {
+            self.postMessage({ success: false, error: (err && err.message) || String(err) });
+          }
+        };
+      `;
+      const blob = new Blob([workerCode], { type: 'application/javascript' });
+      blobUrl = URL.createObjectURL(blob);
+      worker = new Worker(blobUrl);
+
+      worker.onmessage = (e) => {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+        if (worker) worker.terminate();
+        if (e.data && e.data.success) {
+          onComplete(e.data.rows, e.data.meta);
+        } else {
+          this.parseExcelSync(arrayBuffer, onComplete, onError);
+        }
+      };
+
+      worker.onerror = () => {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+        if (worker) worker.terminate();
+        this.parseExcelSync(arrayBuffer, onComplete, onError);
+      };
+
+      const transferable = arrayBuffer.slice(0);
+      worker.postMessage(transferable, [transferable]);
+    } catch (err) {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      if (worker) worker.terminate();
+      this.parseExcelSync(arrayBuffer, onComplete, onError);
+    }
+  },
+
+  parseExcelSync(arrayBuffer, onComplete, onError) {
+    try {
+      if (typeof XLSX === 'undefined') {
+        throw new Error('La librería para leer archivos Excel (SheetJS) no está disponible.');
+      }
+      const data = new Uint8Array(arrayBuffer);
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+        throw new Error('El archivo Excel no contiene hojas de trabajo.');
+      }
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
+      const fields = rows.length > 0 ? Object.keys(rows[0]) : [];
+      onComplete(rows, { fields, sheetName: firstSheetName });
+    } catch (err) {
+      onError(err);
+    }
   },
 
   detectColumn(headers, candidates, usedColumns = []) {
@@ -92,11 +153,17 @@ window.FleetParser = {
     const fuelCol = this.detectColumn(headers, FleetConfig.FUEL_COLUMN_CANDIDATES, used);
     if (fuelCol) used.push(fuelCol);
 
+    const denominacionCol = this.detectColumn(headers, FleetConfig.DENOMINACION_COLUMN_CANDIDATES, used);
+    if (denominacionCol) used.push(denominacionCol);
+
+    const claseCol = this.detectColumn(headers, FleetConfig.CLASS_COLUMN_CANDIDATES, used) || denominacionCol;
+    if (claseCol && !used.includes(claseCol)) used.push(claseCol);
+
+    const marcaCol = this.detectColumn(headers, FleetConfig.BRAND_COLUMN_CANDIDATES, used);
+    if (marcaCol) used.push(marcaCol);
+
     const modeloCol = this.detectColumn(headers, FleetConfig.MODEL_COLUMN_CANDIDATES, used);
     if (modeloCol) used.push(modeloCol);
-
-    const claseCol = this.detectColumn(headers, FleetConfig.CLASS_COLUMN_CANDIDATES, used);
-    if (claseCol) used.push(claseCol);
 
     const gpsCol = this.detectColumn(headers, FleetConfig.GPS_COLUMN_CANDIDATES, used);
     if (gpsCol) used.push(gpsCol);
@@ -108,8 +175,10 @@ window.FleetParser = {
       status: statusCol,
       geo: geoCol,
       fuel: fuelCol,
-      modelo: modeloCol,
+      denominacion: denominacionCol,
       clase: claseCol,
+      marca: marcaCol,
+      modelo: modeloCol,
       gps: gpsCol,
       verificado: verificadoCol
     };

@@ -92,7 +92,7 @@ window.FleetProcessing = {
     const detectedColumns = [];
     const missingColumns = [];
     for (const [key, label] of Object.entries(dimensionLabels)) {
-      const colKey = cols[key] || (key === 'clase' ? cols.modelo : null);
+      const colKey = cols[key] || (key === 'clase' ? (cols.denominacion || cols.modelo) : null);
       if (colKey) {
         detectedColumns.push({ key, label, colName: colKey });
       } else {
@@ -100,13 +100,40 @@ window.FleetProcessing = {
       }
     }
 
+    let modeloExtractor = null;
+    if (cols.marca || cols.modelo) {
+      modeloExtractor = (row) => {
+        const brand = cols.marca ? FleetConfig.normalize(row[cols.marca]) : '';
+        const model = cols.modelo ? FleetConfig.normalize(row[cols.modelo]) : '';
+        if (brand && model) {
+          if (model.startsWith(brand)) return model;
+          return `${brand} ${model}`;
+        }
+        return model || brand || '';
+      };
+    }
+
     const geoData = this.distribution(rows, cols.geo, 10);
-    const fuelData = this.distribution(rows, cols.fuel, null);
-    const claseColTarget = cols.clase || cols.modelo;
+    const fuelData = this.fuelDistribution(rows, cols, total);
+    const modeloData = modeloExtractor ? this.distribution(rows, modeloExtractor, 9, 'OTROS MODELOS') : null;
+    const tipoColTarget = cols.denominacion || cols.clase || cols.modelo;
+    const tipoData = this.distribution(rows, tipoColTarget, 9, 'OTRAS DENOMINACIONES');
+    const claseColTarget = cols.clase || cols.denominacion || cols.modelo;
     const claseData = this.distribution(rows, claseColTarget, 10);
     const gpsData = this.coverage(rows, cols.gps);
     const verificadoData = this.coverage(rows, cols.verificado);
     const porEstadoData = this.operatividadPorEstado(rows, cols);
+
+    const enReparacion = counts.en_reparacion || 0;
+    const totalInactivos = total - operative;
+    const pctRecuperable = totalInactivos > 0 ? (enReparacion / totalInactivos) * 100 : 0;
+
+    const stateDiagnostic = {
+      enReparacion,
+      pctRecuperable,
+      topTipos: tipoData || [],
+      topModelos: modeloData || []
+    };
 
     return {
       total,
@@ -122,10 +149,12 @@ window.FleetProcessing = {
       counts,
       geo: geoData,
       fuel: fuelData,
+      modelo: modeloData,
       clase: claseData,
       gpsCoverage: gpsData,
       verificado: verificadoData,
       porEstado: porEstadoData,
+      stateDiagnostic,
       coverage: {
         detectedCount: detectedColumns.length,
         totalDimensions: 6,
@@ -165,11 +194,13 @@ window.FleetProcessing = {
       .sort((a, b) => b.total - a.total);
   },
 
-  distribution(rows, column, topN) {
-    if (!column) return null;
+  distribution(rows, columnOrExtractor, topN, othersLabel = 'OTROS') {
+    if (!columnOrExtractor) return null;
+    const isFn = typeof columnOrExtractor === 'function';
     const counts = {};
     for (const row of rows) {
-      const value = FleetConfig.normalize(row[column]);
+      const rawVal = isFn ? columnOrExtractor(row) : row[columnOrExtractor];
+      const value = FleetConfig.normalize(rawVal);
       if (!value) continue;
       counts[value] = (counts[value] || 0) + 1;
     }
@@ -181,9 +212,60 @@ window.FleetProcessing = {
     const total = items.reduce((sum, item) => sum + item.count, 0);
 
     if (topN && items.length > topN) {
-      const rest = items.slice(topN);
-      const restCount = rest.reduce((sum, item) => sum + item.count, 0);
-      items = items.slice(0, topN).concat([{ label: 'Otros', count: restCount }]);
+      if (othersLabel) {
+        const labelText = typeof othersLabel === 'string' ? othersLabel : 'OTROS';
+        const rest = items.slice(topN);
+        const restCount = rest.reduce((sum, item) => sum + item.count, 0);
+        items = items.slice(0, topN).concat([{ label: labelText, count: restCount }]);
+      } else {
+        items = items.slice(0, topN);
+      }
+    }
+
+    return items.map((item) => ({
+      ...item,
+      pct: total ? (item.count / total) * 100 : 0
+    }));
+  },
+
+  fuelDistribution(rows, cols, total) {
+    if (!cols || !cols.fuel) return null;
+    const counts = {};
+    let identifiedCount = 0;
+    const statusCol = cols.status;
+
+    for (const row of rows) {
+      if (statusCol) {
+        const semantic = FleetConfig.toSemantic(row[statusCol]);
+        if (semantic === null) continue;
+      }
+
+      const val = FleetConfig.normalize(row[cols.fuel]);
+      if (
+        !val ||
+        val === 'POR IDENTIFICAR' ||
+        val === 'SIN IDENTIFICAR' ||
+        val === 'SIN INFORMACION' ||
+        val === 'NO APLICA' ||
+        val === 'N/A' ||
+        val === 'DESCONOCIDO' ||
+        val === 'NO REGISTRA' ||
+        val === 'NINGUNO' ||
+        val === '-'
+      ) {
+        continue;
+      }
+      counts[val] = (counts[val] || 0) + 1;
+      identifiedCount++;
+    }
+
+    let items = Object.entries(counts)
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const remaining = Math.max(0, total - identifiedCount);
+    if (remaining > 0) {
+      items.push({ label: 'POR IDENTIFICAR', count: remaining });
     }
 
     return items.map((item) => ({
@@ -198,8 +280,11 @@ window.FleetProcessing = {
     let no = 0;
     for (const row of rows) {
       const value = FleetConfig.normalize(row[column]);
-      if (!value || value === 'N' || value === 'NO' || value === 'FALSE' || value === '0') no++;
-      else yes++;
+      if (value === 'Y' || value === 'SI' || value === 'S' || value === 'YES' || value === '1' || value === 'TRUE' || value.startsWith('HTTP')) {
+        yes++;
+      } else {
+        no++;
+      }
     }
     const total = yes + no;
     return { yes, no, pct: total ? (yes / total) * 100 : 0 };
