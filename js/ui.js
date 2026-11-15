@@ -155,9 +155,7 @@ window.FleetUI = (function () {
     if (badge && badgeText) {
       const parts = [];
       if (!isSingleStateFile && activeStateFilter && hasGeo) {
-        const states = extractStates(rawRows, cols.geo);
-        const activeState = states.find((s) => s.norm === activeStateFilter);
-        const label = activeState ? activeState.label : (FleetConfig.resolveStateName(activeStateFilter) || activeStateFilter);
+        const label = FleetConfig.resolveStateName(activeStateFilter) || activeStateFilter;
         parts.push(`Estado ${label}`);
       }
       if (activeFleetOnly) {
@@ -176,8 +174,6 @@ window.FleetUI = (function () {
       }
     }
   }
-
-  const renderStateFilter = renderFilters;
 
   function renderHero(analysis, activeStateFilter, activeFleetOnly, isSingleStateFile, targetStateName) {
     const operativos = statFor(analysis.stats, 'operativo');
@@ -332,9 +328,11 @@ window.FleetUI = (function () {
     } else {
       if (!isSingleStateFile && fullPorEstado && fullPorEstado.length > 1) {
         const sorted = [...fullPorEstado].sort((a, b) => b.pct - a.pct || b.total - a.total);
-        const canonActive = FleetConfig.resolveStateName(targetStateName || activeStateFilter);
+        const targetRaw = targetStateName || activeStateFilter;
+        const canonActive = FleetConfig.resolveStateName(targetRaw);
+        const normTarget = FleetConfig.normalize(targetRaw);
         const rankIdx = sorted.findIndex(
-          (e) => FleetConfig.resolveStateName(e.label) === canonActive || FleetConfig.normalize(e.label) === FleetConfig.normalize(targetStateName || activeStateFilter)
+          (e) => (canonActive && FleetConfig.resolveStateName(e.label) === canonActive) || FleetConfig.normalize(e.label) === normTarget
         );
         if (rankIdx !== -1) {
           const rank = rankIdx + 1;
@@ -498,7 +496,7 @@ window.FleetUI = (function () {
     }
   }
 
-  function renderMapSection(porEstado, activeStateFilter, fullPorEstado, isStateMode, targetStateName, isSingleStateFile, nationalTotal, analysis) {
+  function renderMapSection(porEstado, fullPorEstado, isStateMode, targetStateName, analysis) {
     const mapContainer = byId('mapSectionContainer');
     if (!mapContainer) return;
 
@@ -647,7 +645,7 @@ window.FleetUI = (function () {
     renderHero(analysis, activeStateFilter, activeFleetOnly, isSingleStateFile, targetStateName);
     renderStatusList(analysis.stats);
     renderKpiCards(analysis, activeStateFilter, fullPorEstado, nationalRate, isSingleStateFile, targetStateName);
-    renderMapSection(analysis.porEstado, activeStateFilter, fullPorEstado, isStateMode, targetStateName, isSingleStateFile, nationalTotal, analysis);
+    renderMapSection(analysis.porEstado, fullPorEstado, isStateMode, targetStateName, analysis);
     renderFuelSection(analysis.fuel);
     renderClaseSection(analysis.clase);
 

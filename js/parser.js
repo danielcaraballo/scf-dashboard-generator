@@ -8,7 +8,7 @@ window.FleetParser = {
         header: true,
         skipEmptyLines: 'greedy',
         worker: true,
-        complete: (result) => onComplete(result.data, result.meta),
+        complete: (result) => onComplete(result.data || [], result.meta || {}),
         error: (err) => onError(err)
       });
     }
@@ -31,6 +31,26 @@ window.FleetParser = {
   parseExcelWithWorker(arrayBuffer, onComplete, onError) {
     let worker = null;
     let blobUrl = null;
+    let handled = false;
+
+    const cleanup = () => {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+        blobUrl = null;
+      }
+      if (worker) {
+        worker.terminate();
+        worker = null;
+      }
+    };
+
+    const fallback = () => {
+      if (handled) return;
+      handled = true;
+      cleanup();
+      this.parseExcelSync(arrayBuffer, onComplete, onError);
+    };
+
     try {
       const workerCode = `
         self.onmessage = function(e) {
@@ -56,27 +76,24 @@ window.FleetParser = {
       worker = new Worker(blobUrl);
 
       worker.onmessage = (e) => {
-        if (blobUrl) URL.revokeObjectURL(blobUrl);
-        if (worker) worker.terminate();
         if (e.data && e.data.success) {
+          if (handled) return;
+          handled = true;
+          cleanup();
           onComplete(e.data.rows, e.data.meta);
         } else {
-          this.parseExcelSync(arrayBuffer, onComplete, onError);
+          fallback();
         }
       };
 
       worker.onerror = () => {
-        if (blobUrl) URL.revokeObjectURL(blobUrl);
-        if (worker) worker.terminate();
-        this.parseExcelSync(arrayBuffer, onComplete, onError);
+        fallback();
       };
 
       const transferable = arrayBuffer.slice(0);
       worker.postMessage(transferable, [transferable]);
     } catch (err) {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-      if (worker) worker.terminate();
-      this.parseExcelSync(arrayBuffer, onComplete, onError);
+      fallback();
     }
   },
 

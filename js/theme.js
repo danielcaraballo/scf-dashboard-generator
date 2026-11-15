@@ -60,13 +60,31 @@ window.FleetTheme = (function () {
     });
   }
 
-  window.addEventListener('storage', (e) => {
-    if (e.key === STORAGE_KEY && e.newValue) {
-      document.documentElement.classList.toggle('dark', e.newValue === 'dark');
-      syncButton();
-      refreshUI();
-    }
-  });
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('storage', (e) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        document.documentElement.classList.toggle('dark', e.newValue === 'dark');
+        syncButton();
+        refreshUI();
+      }
+    });
+  }
+
+  const mediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  if (mediaQuery && mediaQuery.addEventListener) {
+    mediaQuery.addEventListener('change', (e) => {
+      let saved = null;
+      try {
+        saved = localStorage.getItem(STORAGE_KEY);
+      } catch (err) {
+      }
+      if (saved === null) {
+        document.documentElement.classList.toggle('dark', e.matches);
+        syncButton();
+        refreshUI();
+      }
+    });
+  }
 
   init();
 

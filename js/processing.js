@@ -1,7 +1,7 @@
 window.FleetProcessing = {
   validateFleetData(rows, cols) {
     if (!rows || rows.length === 0) {
-      return { isValid: false, reason: 'El archivo CSV no contiene registros de datos para analizar.' };
+      return { isValid: false, reason: 'El archivo cargado no contiene registros de datos para analizar.' };
     }
 
     const maxRecords = (FleetConfig.LIMITS && FleetConfig.LIMITS.MAX_RECORDS) || 50000;
@@ -15,7 +15,7 @@ window.FleetProcessing = {
     if (!cols || !cols.status) {
       return {
         isValid: false,
-        reason: 'El archivo CSV no contiene la columna requerida de estatus del vehículo ("Estatus", "Estado", "Condición", etc.).'
+        reason: 'El archivo cargado no contiene la columna requerida de estatus del vehículo ("Estatus", "Estado", "Condición", etc.).'
       };
     }
 
@@ -113,7 +113,6 @@ window.FleetProcessing = {
       };
     }
 
-    const geoData = this.distribution(rows, cols.geo, 10);
     const fuelData = this.fuelDistribution(rows, cols, total);
     const modeloData = modeloExtractor ? this.distribution(rows, modeloExtractor, 9, 'OTROS MODELOS') : null;
     const tipoColTarget = cols.denominacion || cols.clase || cols.modelo;
@@ -147,7 +146,7 @@ window.FleetProcessing = {
       },
       stats,
       counts,
-      geo: geoData,
+      geo: null,
       fuel: fuelData,
       modelo: modeloData,
       clase: claseData,
@@ -175,6 +174,7 @@ window.FleetProcessing = {
     if (!cols.geo) return null;
     const byEstado = {};
     for (const row of rows) {
+      if (!row) continue;
       const estado = FleetConfig.normalize(row[cols.geo]);
       if (!estado) continue;
       if (!byEstado[estado]) byEstado[estado] = { total: 0, operativos: 0 };
@@ -199,6 +199,7 @@ window.FleetProcessing = {
     const isFn = typeof columnOrExtractor === 'function';
     const counts = {};
     for (const row of rows) {
+      if (!row) continue;
       const rawVal = isFn ? columnOrExtractor(row) : row[columnOrExtractor];
       const value = FleetConfig.normalize(rawVal);
       if (!value) continue;
@@ -233,26 +234,27 @@ window.FleetProcessing = {
     const counts = {};
     let identifiedCount = 0;
     const statusCol = cols.status;
+    const UNKNOWN_FUEL = new Set([
+      'POR IDENTIFICAR',
+      'SIN IDENTIFICAR',
+      'SIN INFORMACION',
+      'NO APLICA',
+      'N/A',
+      'DESCONOCIDO',
+      'NO REGISTRA',
+      'NINGUNO',
+      '-'
+    ]);
 
     for (const row of rows) {
+      if (!row) continue;
       if (statusCol) {
         const semantic = FleetConfig.toSemantic(row[statusCol]);
         if (semantic === null) continue;
       }
 
       const val = FleetConfig.normalize(row[cols.fuel]);
-      if (
-        !val ||
-        val === 'POR IDENTIFICAR' ||
-        val === 'SIN IDENTIFICAR' ||
-        val === 'SIN INFORMACION' ||
-        val === 'NO APLICA' ||
-        val === 'N/A' ||
-        val === 'DESCONOCIDO' ||
-        val === 'NO REGISTRA' ||
-        val === 'NINGUNO' ||
-        val === '-'
-      ) {
+      if (!val || UNKNOWN_FUEL.has(val)) {
         continue;
       }
       counts[val] = (counts[val] || 0) + 1;
@@ -276,11 +278,13 @@ window.FleetProcessing = {
 
   coverage(rows, column) {
     if (!column) return null;
+    const AFFIRMATIVE = new Set(['Y', 'SI', 'S', 'YES', '1', 'TRUE']);
     let yes = 0;
     let no = 0;
     for (const row of rows) {
+      if (!row) continue;
       const value = FleetConfig.normalize(row[column]);
-      if (value === 'Y' || value === 'SI' || value === 'S' || value === 'YES' || value === '1' || value === 'TRUE' || value.startsWith('HTTP')) {
+      if (AFFIRMATIVE.has(value) || value.startsWith('HTTP')) {
         yes++;
       } else {
         no++;

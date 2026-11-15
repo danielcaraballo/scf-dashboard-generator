@@ -74,17 +74,19 @@ window.FleetExport = (function () {
   function prefetchFonts() {
     if (typeof window === 'undefined' || !window.fetch) return;
     const run = () => {
-      PDF_FONT_SOURCES.forEach(async (f) => {
-        if (pdfFontBase64Cache.has(f.url)) return;
-        try {
-          const res = await fetch(f.url);
-          if (res.ok) {
-            const base64 = await blobToBase64(await res.blob());
-            pdfFontBase64Cache.set(f.url, base64);
+      Promise.allSettled(
+        PDF_FONT_SOURCES.map(async (f) => {
+          if (pdfFontBase64Cache.has(f.url)) return;
+          try {
+            const res = await fetch(f.url);
+            if (res.ok) {
+              const base64 = await blobToBase64(await res.blob());
+              pdfFontBase64Cache.set(f.url, base64);
+            }
+          } catch (e) {
           }
-        } catch (e) {
-        }
-      });
+        })
+      );
     };
     if (typeof window.requestIdleCallback === 'function') {
       window.requestIdleCallback(run, { timeout: 3000 });
@@ -96,10 +98,18 @@ window.FleetExport = (function () {
   async function captureElement(element) {
     if (!window.html2canvas) {
       await new Promise((resolve) => {
+        let attempts = 0;
         const check = setInterval(() => {
-          if (window.html2canvas) { clearInterval(check); resolve(); }
+          attempts++;
+          if (window.html2canvas || attempts >= 80) {
+            clearInterval(check);
+            resolve();
+          }
         }, 50);
       });
+    }
+    if (!window.html2canvas) {
+      throw new Error('La librería html2canvas no está disponible.');
     }
     if (document.fonts && document.fonts.ready) {
       await document.fonts.ready;
@@ -141,24 +151,11 @@ window.FleetExport = (function () {
           cloneLeaderLines.querySelectorAll('line').forEach((l) => l.setAttribute('stroke', '#94A3B8'));
           cloneLeaderLines.querySelectorAll('circle').forEach((c) => c.setAttribute('fill', '#64748B'));
         }
-        const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-        const seen = new Set();
-        let node = walker.nextNode();
-        while (node) {
-          if (node.textContent.trim()) {
-            const el = node.parentElement;
-            if (el && !seen.has(el)) {
-              seen.add(el);
-              const cs = doc.defaultView.getComputedStyle(el);
-              if (cs.textOverflow === 'ellipsis') {
-                el.style.textOverflow = 'clip';
-                el.style.whiteSpace = 'normal';
-                el.style.overflow = 'visible';
-              }
-            }
-          }
-          node = walker.nextNode();
-        }
+        doc.querySelectorAll('.truncate, [style*="ellipsis"]').forEach((el) => {
+          el.style.textOverflow = 'clip';
+          el.style.whiteSpace = 'normal';
+          el.style.overflow = 'visible';
+        });
       }
     });
   }
@@ -174,7 +171,6 @@ window.FleetExport = (function () {
     try {
       const lr = window.FleetUI && window.FleetUI.getLastResult ? window.FleetUI.getLastResult() : null;
       const analysis = lr ? lr.analysis : null;
-      const isStateMode = Boolean(lr && lr.isStateMode);
       const { dateStr, filterSubtitle } = getMetadata();
 
       const pdf = new jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
@@ -198,11 +194,11 @@ window.FleetExport = (function () {
         document.querySelectorAll('#reportArea [data-report-section]')
       ).filter(
         (el) => !el.hasAttribute('data-report-exclude') && el.offsetParent !== null
-      ).map((el) => ({ type: 'single', el }));
+      );
 
       const capturedSections = [];
 
-      for (const item of sectionsToCapture) {
+      for (const sectionEl of sectionsToCapture) {
         const wrap = document.createElement('div');
         wrap.style.cssText = `
           position: absolute;
@@ -215,7 +211,7 @@ window.FleetExport = (function () {
           font-family: 'Poppins', sans-serif;
         `;
 
-        const cloned = item.el.cloneNode(true);
+        const cloned = sectionEl.cloneNode(true);
         cloned.querySelectorAll('[data-report-exclude]').forEach((e) => e.remove());
         wrap.appendChild(cloned);
 

@@ -1,5 +1,6 @@
 window.FleetCharts = (function () {
   const charts = {};
+  const fmt = new Intl.NumberFormat('es-MX');
   const PALETTE = ['#0EA5E9', '#10B981', '#EAB308', '#F97316', '#8B5CF6', '#EF4444', '#06B6D4', '#64748B', '#84CC16', '#A855F7', '#14B8A6', '#EC4899'];
 
   function isDark() {
@@ -9,8 +10,8 @@ window.FleetCharts = (function () {
   function themeColors(theme) {
     const dark = theme === 'dark' ? true : theme === 'light' ? false : isDark();
     return dark
-      ? { donutBorder: '#1E293B', countText: '#CBD5E1', hbarTick: '#94A3B8', vbarTick: '#94A3B8' }
-      : { donutBorder: '#FFFFFF', countText: '#334155', hbarTick: '#475569', vbarTick: '#64748B' };
+      ? { donutBorder: '#1E293B', countText: '#CBD5E1', hbarTick: '#94A3B8' }
+      : { donutBorder: '#FFFFFF', countText: '#334155', hbarTick: '#475569' };
   }
 
   function canvasOf(idOrEl) {
@@ -48,7 +49,7 @@ window.FleetCharts = (function () {
 
   function pctLabel(item, total) {
     const pct = total ? ((item.count / total) * 100).toFixed(1) : '0.0';
-    return `${item.label}: ${item.count.toLocaleString('es-MX')} (${pct}%)`;
+    return `${item.label}: ${fmt.format(item.count)} (${pct}%)`;
   }
 
   function renderDonut(idOrEl, items, total, opts) {
@@ -85,6 +86,7 @@ window.FleetCharts = (function () {
   }
 
   function countRightPlugin(items, theme) {
+    const textColor = themeColors(theme).countText;
     return {
       id: 'countRight',
       afterDatasetsDraw(chart) {
@@ -93,11 +95,11 @@ window.FleetCharts = (function () {
         ctx.font = '600 11px Poppins, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = themeColors(theme).countText;
+        ctx.fillStyle = textColor;
         items.forEach((item, i) => {
           const px = scales.x.getPixelForValue(item.count);
           const py = scales.y.getPixelForValue(i);
-          ctx.fillText(item.count.toLocaleString('es-MX'), px + 6, py);
+          ctx.fillText(fmt.format(item.count), px + 6, py);
         });
         ctx.restore();
       }
@@ -133,8 +135,8 @@ window.FleetCharts = (function () {
           tooltip: {
             callbacks: {
               label: (c) => {
-                const item = items.find((i) => i.label === c.label);
-                return `${c.raw.toLocaleString('es-MX')} (${item ? item.pct.toFixed(1) : '0.0'}%)`;
+                const item = items[c.dataIndex] || items.find((i) => i.label === c.label);
+                return `${fmt.format(c.raw)} (${item ? item.pct.toFixed(1) : '0.0'}%)`;
               }
             }
           }

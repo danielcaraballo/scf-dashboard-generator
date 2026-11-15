@@ -59,36 +59,40 @@ window.FleetMap = (function () {
       </div>`;
   }
 
-  function showTooltip(ev, name, d) {
-    const tooltipEl = byId('mapTooltip');
-    const wrapper = byId('mapVzWrapper');
-    if (!tooltipEl || !wrapper) return;
+  let activeTooltipEl = null;
+  let activeWrapperEl = null;
+  let activeWrapperRect = null;
+  let activeTooltipW = 0;
+  let activeTooltipH = 0;
 
-    tooltipEl.innerHTML = tooltipHtml(name, d);
-    tooltipEl.classList.remove('hidden');
+  function showTooltip(ev, name, d) {
+    activeTooltipEl = activeTooltipEl || byId('mapTooltip');
+    activeWrapperEl = activeWrapperEl || byId('mapVzWrapper');
+    if (!activeTooltipEl || !activeWrapperEl) return;
+
+    activeTooltipEl.innerHTML = tooltipHtml(name, d);
+    activeTooltipEl.classList.remove('hidden');
+    activeWrapperRect = activeWrapperEl.getBoundingClientRect();
+    activeTooltipW = activeTooltipEl.offsetWidth;
+    activeTooltipH = activeTooltipEl.offsetHeight;
     moveTooltip(ev);
     highlightState(name, true);
   }
 
   function moveTooltip(ev) {
-    const tooltipEl = byId('mapTooltip');
-    const wrapper = byId('mapVzWrapper');
-    if (!tooltipEl || !wrapper || tooltipEl.classList.contains('hidden')) return;
+    if (!activeTooltipEl || !activeWrapperRect || activeTooltipEl.classList.contains('hidden')) return;
 
-    const rect = wrapper.getBoundingClientRect();
-    let x = ev.clientX - rect.left + 14;
-    let y = ev.clientY - rect.top + 14;
-    const tw = tooltipEl.offsetWidth;
-    const th = tooltipEl.offsetHeight;
-    if (x + tw > rect.width - 8) x = ev.clientX - rect.left - tw - 14;
-    if (y + th > rect.height - 8) y = ev.clientY - rect.top - th - 14;
-    tooltipEl.style.left = `${Math.max(8, x)}px`;
-    tooltipEl.style.top = `${Math.max(8, y)}px`;
+    let x = ev.clientX - activeWrapperRect.left + 14;
+    let y = ev.clientY - activeWrapperRect.top + 14;
+    if (x + activeTooltipW > activeWrapperRect.width - 8) x = ev.clientX - activeWrapperRect.left - activeTooltipW - 14;
+    if (y + activeTooltipH > activeWrapperRect.height - 8) y = ev.clientY - activeWrapperRect.top - activeTooltipH - 14;
+    activeTooltipEl.style.left = `${Math.max(8, x)}px`;
+    activeTooltipEl.style.top = `${Math.max(8, y)}px`;
   }
 
   function hideTooltip(name) {
-    const tooltipEl = byId('mapTooltip');
-    if (tooltipEl) tooltipEl.classList.add('hidden');
+    if (activeTooltipEl) activeTooltipEl.classList.add('hidden');
+    activeWrapperRect = null;
     if (name) {
       highlightState(name, false);
     } else {
@@ -99,8 +103,9 @@ window.FleetMap = (function () {
   }
 
   function highlightState(name, isHovered) {
-    const paths = document.querySelectorAll(`.vz-state[data-canon="${name}"]`);
-    const badges = document.querySelectorAll(`.state-badge[data-canon="${name}"]`);
+    const escaped = window.CSS && CSS.escape ? CSS.escape(name) : name;
+    const paths = document.querySelectorAll(`.vz-state[data-canon="${escaped}"]`);
+    const badges = document.querySelectorAll(`.state-badge[data-canon="${escaped}"]`);
     paths.forEach((p) => {
       if (isHovered) p.classList.add('is-hovered');
       else p.classList.remove('is-hovered');
@@ -160,93 +165,11 @@ window.FleetMap = (function () {
             tspan.textContent = `${d.pct.toFixed(0)}%`;
           }
         } else {
-          tspan.setAttribute('fill', isDark ? '#64748B' : '#64748B');
+          tspan.setAttribute('fill', '#64748B');
           tspan.textContent = 'Sin datos';
         }
       }
     });
-  }
-
-  function exportPng() {
-    const svg = byId('venezuelaMapSvg') || document.querySelector('#mapVzBox svg');
-    if (!svg) return;
-
-    const svgClone = svg.cloneNode(true);
-    const width = 1908;
-    const height = 1590;
-    svgClone.setAttribute('width', width);
-    svgClone.setAttribute('height', height);
-
-    svgClone.querySelectorAll('.state-badge').forEach((b) => {
-      const rect = b.querySelector('rect');
-      if (rect) rect.setAttribute('fill', '#FFFFFF');
-      const textTspans = b.querySelectorAll('tspan');
-      if (textTspans[0]) textTspans[0].setAttribute('fill', '#0F172A');
-    });
-    svgClone.querySelectorAll('.vz-state').forEach((p) => {
-      p.setAttribute('stroke', '#FFFFFF');
-      if (!p.getAttribute('fill') || p.getAttribute('fill').toUpperCase() === '#334155') {
-        p.setAttribute('fill', '#E2E8F0');
-      }
-    });
-
-    const legendItems = [
-      { color: COLORS.high, label: '≥80% Operatividad' },
-      { color: COLORS.mid, label: '50–79% Operatividad' },
-      { color: COLORS.low, label: '<50% Operatividad' },
-      { color: '#CBD5E1', label: 'Sin datos' }
-    ];
-
-    const itemHeight = 18.5;
-    const boxPadding = 8.5;
-    const boxHeight = legendItems.length * itemHeight + boxPadding * 2 - 3;
-    const boxWidth = 120;
-    const startX = 16;
-    const startY = 514 - boxHeight;
-
-    let legendItemsSvg = '';
-    legendItems.forEach((item, idx) => {
-      const itemY = startY + boxPadding + idx * itemHeight + 7;
-      legendItemsSvg += `
-        <circle cx="${startX + 12}" cy="${itemY}" r="4.2" fill="${item.color}" />
-        <text x="${startX + 22}" y="${itemY + 3.2}" font-family="'Poppins', sans-serif" font-size="8.5" font-weight="600" fill="#475569">${item.label}</text>
-      `;
-    });
-
-    const legendGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    legendGroup.setAttribute('id', 'svgExportLegend');
-    legendGroup.innerHTML = `
-      <rect x="${startX}" y="${startY}" width="${boxWidth}" height="${boxHeight}" rx="6" fill="#FFFFFF" fill-opacity="0.95" stroke="#cbd5e1" stroke-width="1.1" />
-      ${legendItemsSvg}
-    `;
-    svgClone.appendChild(legendGroup);
-
-    const svgData = new XMLSerializer().serializeToString(svgClone);
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const URL = window.URL || window.webkitURL || window;
-    const blobURL = URL.createObjectURL(svgBlob);
-
-    const image = new Image();
-    image.onload = function () {
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(image, 0, 0, width, height);
-
-      const pngUrl = canvas.toDataURL('image/png');
-      const downloadLink = document.createElement('a');
-      downloadLink.href = pngUrl;
-      downloadLink.download = 'mapa_operatividad_flota.png';
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-      URL.revokeObjectURL(blobURL);
-    };
-    image.src = blobURL;
   }
 
   function isFullscreen() {
@@ -539,7 +462,7 @@ window.FleetMap = (function () {
           textTspans[0].setAttribute('fill', isDark ? '#94A3B8' : '#334155');
         }
         if (valTspan) {
-          valTspan.setAttribute('fill', isDark ? '#64748B' : '#64748B');
+          valTspan.setAttribute('fill', '#64748B');
           valTspan.textContent = 'Sin datos';
         }
         badge.onmouseenter = null;
@@ -553,7 +476,7 @@ window.FleetMap = (function () {
     const leaderLinesGroup = box.querySelector('#leaderLinesGroup');
     if (leaderLinesGroup) {
       leaderLinesGroup.querySelectorAll('line').forEach((line) => {
-        line.setAttribute('stroke', isDark ? '#64748B' : '#64748B');
+        line.setAttribute('stroke', '#64748B');
       });
       leaderLinesGroup.querySelectorAll('circle').forEach((circle) => {
         circle.setAttribute('fill', isDark ? '#94A3B8' : '#475569');
@@ -618,5 +541,5 @@ window.FleetMap = (function () {
     });
   }
 
-  return { render, renderMiniMap, setTagMode, exportPng, toggleFullscreen, toneFor };
+  return { render, renderMiniMap, setTagMode, toggleFullscreen, toneFor };
 })();

@@ -15,6 +15,8 @@
   let currentFile = null;
   let currentStateFilter = "";
   let activeFleetOnly = false;
+  let isSingleStateFile = false;
+  let singleStateRawName = "";
 
   function applyFilters() {
     if (!currentRows || !currentCols) return;
@@ -27,28 +29,10 @@
     }
 
     const currentFullPorEstado = FleetProcessing.operatividadPorEstado(baseRows, currentCols);
-    const fullAnalysis = FleetProcessing.analyze(baseRows, currentCols);
-    const currentNationalRate = fullAnalysis ? fullAnalysis.rate : 0;
-    const currentNationalTotal = fullAnalysis ? fullAnalysis.total : 0;
 
-    let uniqueStatesCount = 0;
-    let singleStateRawName = '';
-    if (currentCols.geo && currentRows && currentRows.length > 0) {
-      const stateSet = new Set();
-      for (const r of currentRows) {
-        const norm = FleetConfig.normalize(r[currentCols.geo]);
-        if (norm) {
-          stateSet.add(norm);
-          if (!singleStateRawName) singleStateRawName = norm;
-        }
-      }
-      uniqueStatesCount = stateSet.size;
-    }
-
-    const isSingleStateFile = uniqueStatesCount === 1;
     const isStateMode = Boolean(isSingleStateFile || currentStateFilter);
 
-    let targetStateName = '';
+    let targetStateName = "";
     if (currentStateFilter) {
       targetStateName = FleetConfig.resolveStateName(currentStateFilter) || currentStateFilter;
     } else if (isSingleStateFile && singleStateRawName) {
@@ -57,12 +41,32 @@
 
     let filteredRows = baseRows;
     if (currentStateFilter && currentCols.geo) {
+      const targetNorm = FleetConfig.normalize(currentStateFilter);
       filteredRows = baseRows.filter(
-        (row) => FleetConfig.normalize(row[currentCols.geo]) === currentStateFilter
+        (row) => FleetConfig.normalize(row[currentCols.geo]) === targetNorm
       );
     }
 
-    const analysis = FleetProcessing.analyze(filteredRows, currentCols);
+    let analysis;
+    let currentNationalRate = 0;
+    const currentNationalTotal = baseRows.length;
+
+    if (!currentStateFilter) {
+      analysis = FleetProcessing.analyze(baseRows, currentCols);
+      currentNationalRate = analysis ? analysis.rate : 0;
+    } else {
+      let baseOperative = 0;
+      if (currentCols.status) {
+        for (const r of baseRows) {
+          if (FleetConfig.toSemantic(r[currentCols.status]) === "operativo") {
+            baseOperative++;
+          }
+        }
+      }
+      currentNationalRate = currentNationalTotal ? (baseOperative / currentNationalTotal) * 100 : 0;
+      analysis = FleetProcessing.analyze(filteredRows, currentCols);
+    }
+
     FleetUI.render({
       analysis,
       file: currentFile,
@@ -88,6 +92,8 @@
     currentFile = null;
     currentStateFilter = "";
     activeFleetOnly = false;
+    isSingleStateFile = false;
+    singleStateRawName = "";
     if (file.size === 0) {
       FleetUI.showError("El archivo está vacío (0 bytes).");
       return;
@@ -124,16 +130,23 @@
         currentFile = file;
 
         let initialFilterState = "";
+        let uniqueStatesCount = 0;
+        singleStateRawName = "";
         if (cols && cols.geo && rows && rows.length > 0) {
           const uniqueStates = new Set();
           for (const r of rows) {
             const norm = FleetConfig.normalize(r[cols.geo]);
-            if (norm) uniqueStates.add(norm);
+            if (norm) {
+              uniqueStates.add(norm);
+              if (!singleStateRawName) singleStateRawName = norm;
+            }
           }
-          if (uniqueStates.size === 1) {
+          uniqueStatesCount = uniqueStates.size;
+          if (uniqueStatesCount === 1) {
             initialFilterState = Array.from(uniqueStates)[0];
           }
         }
+        isSingleStateFile = uniqueStatesCount === 1;
 
         if (stateFilterSelect) {
           stateFilterSelect.value = initialFilterState;
@@ -210,14 +223,14 @@
     document.addEventListener(evt, (e) => {
       e.preventDefault();
       if (dropZone && emptyState && !emptyState.classList.contains("hidden"))
-        dropZone.classList.add("ring-2", "ring-sky-400", "bg-sky-50");
+        dropZone.classList.add("ring-2", "ring-sky-400", "bg-sky-50", "dark:bg-sky-950/40");
     });
   });
 
   ["dragleave", "drop"].forEach((evt) => {
     document.addEventListener(evt, (e) => {
       e.preventDefault();
-      if (dropZone) dropZone.classList.remove("ring-2", "ring-sky-400", "bg-sky-50");
+      if (dropZone) dropZone.classList.remove("ring-2", "ring-sky-400", "bg-sky-50", "dark:bg-sky-950/40");
     });
   });
 

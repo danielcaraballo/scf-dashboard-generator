@@ -154,12 +154,12 @@ window.FleetConfig = {
   },
 
   normalize(value) {
-    return String(value ?? '')
-      .trim()
-      .toUpperCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s+/g, ' ');
+    if (value === null || value === undefined) return '';
+    let str = String(value).trim().toUpperCase();
+    if (/[\u0080-\uffff]/.test(str)) {
+      str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    return str.replace(/\s+/g, ' ');
   },
 
   formatStateLabel(value) {
@@ -167,14 +167,26 @@ window.FleetConfig = {
     return this.STATE_ABBREVIATIONS[norm] || String(value ?? '').trim();
   },
 
+  _stateCache: null,
+
+  _getStateMap() {
+    if (!this._stateCache) {
+      const map = new Map();
+      for (const state of this.VENEZUELA_STATES) {
+        map.set(this.normalize(state), state);
+      }
+      for (const [alias, target] of Object.entries(this.STATE_ALIASES)) {
+        map.set(this.normalize(alias), target);
+      }
+      this._stateCache = map;
+    }
+    return this._stateCache;
+  },
+
   resolveStateName(value) {
     const norm = this.normalize(value);
     if (!norm) return null;
-    if (this.STATE_ALIASES[norm]) return this.STATE_ALIASES[norm];
-    for (const state of this.VENEZUELA_STATES) {
-      if (this.normalize(state) === norm) return state;
-    }
-    return null;
+    return this._getStateMap().get(norm) || null;
   },
 
   toSemantic(raw) {

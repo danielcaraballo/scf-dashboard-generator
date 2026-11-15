@@ -48,5 +48,11 @@ window.FleetTV = (function () {
   }
   if (tvExitBtn) tvExitBtn.addEventListener("click", exit);
 
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.body.classList.contains("tv-mode")) {
+      exit();
+    }
+  });
+
   return { enter, exit };
 })();
